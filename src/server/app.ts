@@ -17,7 +17,6 @@ import {
   validatePcoCredentials,
   writePcoCredentialsToEnv,
 } from './pco/credentials';
-import { LOOP_LOGIN_URL } from './prime/playwright/session';
 import { scheduleInfo } from './sync/scheduler';
 import { countOperations } from './sync/engine';
 
@@ -664,6 +663,7 @@ export function createApp(services: Services): express.Express {
         res.json({ ok: true, message: 'Mock adapter: session marked authenticated' });
         return;
       }
+      const loginUrl = services.primeAdapter.loginUrl;
       // Wait for the launch to actually happen: reporting success before this
       // point told people a window was opening when it never appeared.
       try {
@@ -673,15 +673,15 @@ export function createApp(services: Services): express.Express {
         console.error('[prime] could not open the login window:', reason);
         res.status(502).json({
           error: 'login_window_failed',
-          loginUrl: LOOP_LOGIN_URL,
+          loginUrl,
           message: `Could not open the login window on this computer: ${reason}. Chromium could not start — run \`npx playwright install chromium\`, and on Linux it may also need system libraries. The window opens on the machine running PCO Prime Sync, so a remote or headless server cannot show it: run the app on your own Mac (npm run dev) to log in.`,
         });
         return;
       }
       res.json({
         ok: true,
-        loginUrl: LOOP_LOGIN_URL,
-        message: `A Chromium window opened at ${LOOP_LOGIN_URL} on this computer. Sign in there with your own Loop Community credentials, then close the window. Login state can only be verified once the selector contract is configured.`,
+        loginUrl,
+        message: `A Chromium window opened at ${loginUrl} on this computer. Loop redirects it to the WorshipTools sign-in — enter your own credentials there, then close the window. Login state can only be verified once the selector contract is configured.`,
       });
     }),
   );

@@ -79,6 +79,8 @@ export interface CreateSetlistInput {
  */
 export interface PrimeAdapter {
   readonly kind: 'playwright' | 'mock';
+  /** Page the login window opens; Loop redirects from here to its auth host. */
+  readonly loginUrl: string;
 
   capabilities(): PrimeCapabilityReport[];
   sessionStatus(): Promise<PrimeSessionStatus>;

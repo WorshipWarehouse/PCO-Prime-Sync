@@ -88,6 +88,8 @@ export class MockPrimeAdapter implements PrimeAdapter {
     };
   }
 
+  readonly loginUrl = 'mock://prime/login';
+
   async startManualLogin(): Promise<void> {
     // No browser exists in mock mode; nothing to wait for.
   }

@@ -43,6 +43,10 @@ import {
 export class PlaywrightPrimeAdapter implements PrimeAdapter {
   readonly kind = 'playwright' as const;
   private readonly session: PrimeBrowserSession;
+
+  get loginUrl(): string {
+    return this.session.loginUrl;
+  }
   private readonly config: PrimeSelectorConfig;
 
   constructor(session: PrimeBrowserSession) {

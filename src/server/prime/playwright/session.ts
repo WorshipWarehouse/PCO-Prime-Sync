@@ -6,17 +6,18 @@ import { PrimeSessionExpiredError } from '../adapter';
 import { loadSelectorConfig, type PrimeSelectorConfig } from './selectors';
 
 /**
- * Loop Community signs users in through WorshipTools' shared auth host, not
- * through the Prime site itself. Opening this page is the only login step the
- * app performs: the administrator types their own credentials there.
+ * Loop Community has no standalone login page: the Prime app redirects to
+ * WorshipTools' shared sign-in with parameters only the site knows. So the login
+ * window opens the Prime app and lets it perform that redirect, exactly like a
+ * person would, instead of hard-coding an auth URL that redirects elsewhere.
  */
-export const LOOP_LOGIN_URL = 'https://auth.worshiptools.com/login';
+export const LOOP_PRIME_ENTRY_PATH = '/prime-multitrack-app';
 
 export interface PrimeSessionOptions {
   profileDir: string;
   headless: boolean;
   baseUrl: string;
-  /** Where the manual login window opens. Defaults to {@link LOOP_LOGIN_URL}. */
+  /** Overrides the page the manual login window opens. */
   loginUrl?: string;
   loginTimeoutMs: number;
   actionTimeoutMs: number;
@@ -45,7 +46,9 @@ export class PrimeBrowserSession {
     this.profileDir = options.profileDir;
     this.headless = options.headless;
     this.baseUrl = options.baseUrl.replace(/\/+$/, '');
-    this.loginUrl = options.loginUrl ?? LOOP_LOGIN_URL;
+    // Default to the Prime app so its own sign-in redirect runs; the marketing
+    // site (what auth.worshiptools.com/login falls back to) would just sit blank.
+    this.loginUrl = options.loginUrl ?? `${this.baseUrl}${LOOP_PRIME_ENTRY_PATH}`;
     this.loginTimeoutMs = options.loginTimeoutMs;
     this.actionTimeoutMs = options.actionTimeoutMs;
     this.config = options.selectorConfig ?? loadSelectorConfig();
@@ -157,6 +160,11 @@ export class PrimeBrowserSession {
     // Go straight to the WorshipTools auth page: that is where Loop Community
     // actually signs people in, and it sets the cookies the Prime site reads.
     await page.goto(this.loginUrl, { waitUntil: 'domcontentloaded', timeout: this.actionTimeoutMs });
+    // Let the site's own redirect to the WorshipTools sign-in settle before the
+    // request returns, so the window never sits on a blank intermediate page.
+    await page
+      .waitForLoadState('load', { timeout: Math.min(this.actionTimeoutMs, 20_000) })
+      .catch(() => undefined);
   }
 
   /**

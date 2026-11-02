@@ -13,7 +13,8 @@ import {
   formatDateTime,
 } from '../components';
 
-const LOOP_LOGIN_URL = 'https://auth.worshiptools.com/login';
+// The Prime app itself starts the sign-in redirect; the auth host alone does not.
+const DEFAULT_PRIME_ENTRY = 'https://loopcommunity.com/prime-multitrack-app';
 
 type Tab = 'home' | 'review' | 'sync' | 'settings';
 
@@ -25,7 +26,7 @@ export function OverviewPage({ onNavigate }: { onNavigate: (tab: Tab) => void })
   const [data, setData] = useState<OverviewPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [loginUrl, setLoginUrl] = useState<string>(LOOP_LOGIN_URL);
+  const [loginUrl, setLoginUrl] = useState<string>(DEFAULT_PRIME_ENTRY);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {

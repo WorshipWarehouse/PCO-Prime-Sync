@@ -32,7 +32,7 @@ There is no public Loop Community API. PCO Prime Sync drives the **visible websi
 ## Discovering the real UI
 
 ```bash
-npm run prime:login     # opens https://auth.worshiptools.com/login, session saved in the profile
+npm run prime:login     # opens the Prime app, which redirects to the sign-in; session saved in the profile
 npm run prime:explore   # capture pages while you navigate as a normal user
 ```
 
