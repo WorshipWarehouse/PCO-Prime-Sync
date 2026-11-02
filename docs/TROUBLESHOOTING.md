@@ -15,6 +15,8 @@ npm run dev                        # dashboard: http://127.0.0.1:3000
 
 Vite now fails with `Port 3000 is already in use` instead of quietly moving to 3001, so this cannot happen unnoticed again. The `Failed to load …` line under **Browser:** states the HTTP status and content type, which separates a stale server (HTML or the wrong type on that port) from a missing file (404).
 
+A 404 on one client module is enough to kill the whole page: the browser console shows `Failed to load resource … 404` for that file and the entry never runs. The dev proxy used to swallow the client's own `/api.ts` because its key was the bare prefix `/api`; it is now anchored to `/api/`, so only real API calls are forwarded.
+
 **Blank page with the correct title and no message**
 That means the module bundle was rejected before the app could run. Reload with the cache disabled, restart `npm run dev` (or re-run `npm run build` for `npm start`), and check the browser console. For a production run, confirm you are on the URL `npm start` prints — the server rejects writes from a different host or port.
 

@@ -38,7 +38,11 @@ export default defineConfig({
     strictPort: true,
     ...(allowedHosts.length > 0 ? { allowedHosts } : {}),
     proxy: {
-      '/api': {
+      // Anchored, because a plain '/api' key is a prefix match: it also caught
+      // the client's own module at /api.ts, sent it to the Express server,
+      // got a 404 back, and left the whole module graph dead — a blank page in
+      // every browser. Only real /api/ requests may reach the API.
+      '^/api/': {
         target: `http://127.0.0.1:${apiPort}`,
         changeOrigin: false,
       },

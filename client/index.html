@@ -43,7 +43,28 @@
                     ' instead of JavaScript, so the browser refused it. That process is serving the folder as plain files; stop it and start `npm run dev`.'
                   );
                 }
-                return line + ' — delivered as JavaScript, so the script itself was rejected.';
+                // Delivered correctly, so the failure is either the module
+                // itself or a stale cached copy of it. Ask for it again under a
+                // URL no cache can have an entry for: if that works, the cache
+                // is the problem, and if it does not, the error says why.
+                var fresh =
+                  src + (src.indexOf('?') === -1 ? '?' : '&') + 'fresh=' + Date.now();
+                return import(fresh).then(
+                  function () {
+                    return (
+                      line +
+                      ' — but the same module loads fine when requested fresh, so this browser is reusing a cached older copy of it. Clear the cached data for this origin (Safari: Settings → Privacy → Manage Website Data → remove 127.0.0.1, or Develop → Empty Caches) and reload.'
+                    );
+                  },
+                  function (error) {
+                    return (
+                      line +
+                      ' — and importing it fresh failed too: ' +
+                      ((error && error.message) || String(error)) +
+                      '. The browser console has the full stack.'
+                    );
+                  },
+                );
               })
               .catch(function (error) {
                 return (
