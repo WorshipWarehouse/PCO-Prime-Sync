@@ -140,6 +140,19 @@ export class PrimeBrowserSession {
       );
     }
     const deadline = Date.now() + this.loginTimeoutMs;
+    const configured = Boolean(this.config.selectors.loggedInIndicator || this.config.selectors.loggedOutIndicator);
+    if (!configured) {
+      // Without a login indicator we cannot verify the result, so wait for the
+      // administrator to close the window and never claim the login succeeded.
+      // The persistent profile still captures whatever session Loop set.
+      await Promise.race([
+        new Promise<void>((resolve) => context.once('close', () => resolve())),
+        new Promise<void>((resolve) =>
+          setTimeout(resolve, Math.max(0, deadline - Date.now())).unref?.(),
+        ),
+      ]);
+      return;
+    }
     while (Date.now() < deadline) {
       if (await this.isAuthenticated().catch(() => false)) return;
       await new Promise((resolve) => setTimeout(resolve, 2000));

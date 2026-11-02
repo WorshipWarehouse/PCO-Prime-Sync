@@ -23,9 +23,21 @@ npm rebuild better-sqlite3
 
 ### Planning Center Personal Access Token
 
+Create the token once:
+
 1. Open <https://api.planningcenteronline.com/oauth/applications>.
 2. Create a Personal Access Token with access to **Services**.
-3. Copy the **Application ID** and **Secret** into `.env`:
+3. Keep the **Application ID** and **Secret** to hand.
+
+Then enter it in the app (recommended, no restart needed):
+
+1. Start the app (`npm run dev`) **without** `PCO_PRIME_SYNC_MOCK=1`.
+2. Settings → **Planning Center credentials**: paste the application id and secret.
+3. **Test connection** — Planning Center answers live and lists the service types the token can see. Nothing is stored at this point.
+4. **Save and connect** — the token is validated again, written to `.env` with `0600` permissions, and the running server switches to the real adapter immediately.
+5. Pick the service types from the list, then **Load teams from Planning Center**.
+
+Prefer the terminal? Add the same values to `.env` yourself and restart the server:
 
 ```dotenv
 PCO_APP_ID=your-application-id
@@ -139,6 +151,7 @@ Everything is in one SQLite file (`data/pco-prime-sync.sqlite` by default) plus 
 ## 10. Verification checklist
 
 - [ ] `npm test` passes
+- [ ] Settings *Test connection* lists the expected service types
 - [ ] Overview shows Planning Center connected and Loop authenticated
 - [ ] Service plans show songs, keys, arrangements and only worship-team musicians
 - [ ] Song and team mappings are confirmed
@@ -154,5 +167,7 @@ To explore the UI with generated data and no credentials:
 ```bash
 PCO_PRIME_SYNC_MOCK=1 npm run dev
 ```
+
+Use mock mode to prove the app works locally before adding real credentials. When you are ready for the real thing, stop it and run `npm run dev` without the flag: the dashboard then accepts the Personal Access Token and the Loop login window. Mock mode refuses credential saving with `mock_mode` on purpose, so a demo server can never hold a real secret.
 
 This never contacts Planning Center or Loop. Mock adapters are never selected implicitly, and the in-memory mock Loop keeps its setlists only for the life of that server process — which is exactly why repeated syncs in one session demonstrate idempotency (the second run reports zero changes).

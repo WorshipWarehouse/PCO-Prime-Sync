@@ -64,7 +64,7 @@ const OPERATION_ORDER: Record<string, number> = {
  */
 export class SyncEngine {
   private readonly repo: Repository;
-  private readonly pcoAdapter: PcoAdapter | null;
+  private pcoAdapter: PcoAdapter | null;
   private readonly primeAdapter: PrimeAdapter | null;
   private readonly now: () => Date;
 
@@ -73,6 +73,11 @@ export class SyncEngine {
     this.pcoAdapter = deps.pcoAdapter;
     this.primeAdapter = deps.primeAdapter;
     this.now = deps.now ?? (() => new Date());
+  }
+
+  /** Swap the Planning Center adapter after credentials are entered in the dashboard. */
+  setPcoAdapter(adapter: PcoAdapter | null): void {
+    this.pcoAdapter = adapter;
   }
 
   private window(settings: ChurchSettings): { fromDate: string; toDate: string } {
@@ -105,7 +110,7 @@ export class SyncEngine {
 
     if (!this.pcoAdapter) {
       blockingNotices.push(
-        'Planning Center credentials are not configured. Add PCO_APP_ID and PCO_SECRET to .env (see docs/SETUP.md).',
+        'Planning Center credentials are not configured. Add a Personal Access Token in Settings (see docs/SETUP.md).',
       );
       return {
         settings,

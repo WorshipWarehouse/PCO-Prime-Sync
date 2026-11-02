@@ -12,6 +12,11 @@ import type {
 import { normalizeSongName } from '../shared/naming';
 import { addDaysToIsoDate, timePartsInTimeZone } from '../shared/naming';
 import type { Services } from './services';
+import {
+  applyPcoCredentials,
+  validatePcoCredentials,
+  writePcoCredentialsToEnv,
+} from './pco/credentials';
 import { scheduleInfo } from './sync/scheduler';
 import { countOperations } from './sync/engine';
 
@@ -63,6 +68,11 @@ const memberMappingSchema = z.object({
   primeMemberName: z.string().trim().min(1).max(300),
   pcoPersonId: z.string().trim().max(100).nullable().optional(),
   pcoName: z.string().trim().max(300).nullable().optional(),
+});
+
+const pcoCredentialSchema = z.object({
+  appId: z.string().trim().min(1).max(200),
+  secret: z.string().trim().min(1).max(500),
 });
 
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -136,9 +146,10 @@ export function createApp(services: Services): express.Express {
         pco = {
           configured: false,
           ok: false,
-          message: 'Planning Center credentials are not configured. Add PCO_APP_ID and PCO_SECRET to .env.',
+          message:
+            'Planning Center credentials are not configured. Add a Personal Access Token in Settings.',
           checkedAt: new Date().toISOString(),
-          secretSource: services.env.pcoSecretSource,
+          secretSource: services.pcoSecretSource(),
           serviceTypeCount: null,
         };
         pcoStatusCache = { value: pco, expires: now + 15_000 };
@@ -149,7 +160,7 @@ export function createApp(services: Services): express.Express {
           ok: result.ok,
           message: result.message,
           checkedAt: new Date().toISOString(),
-          secretSource: services.env.pcoSecretSource,
+          secretSource: services.pcoSecretSource(),
           serviceTypeCount: result.serviceTypeCount,
         };
         pcoStatusCache = { value: pco, expires: now + 60_000 };
@@ -199,7 +210,7 @@ export function createApp(services: Services): express.Express {
     const settings = services.repo.getSettings();
     res.json({
       settings,
-      secretSource: services.env.pcoSecretSource,
+      secretSource: services.pcoSecretSource(),
       primeInitError: services.primeInitError,
       teams: services.repo.listTeamConfiguration(),
     });
@@ -218,6 +229,75 @@ export function createApp(services: Services): express.Express {
       const saved = services.repo.updateSettings(rest);
       if (pcoTeamIds) services.repo.setWorshipTeamIds(pcoTeamIds);
       res.json({ settings: services.repo.getSettings(), saved: Boolean(saved) });
+    }),
+  );
+
+  // ---- Planning Center credentials --------------------------------------
+  /** Test a token against the real API. Nothing is stored. */
+  app.post(
+    '/api/pco/credentials/test',
+    asyncHandler(async (req, res) => {
+      if (services.pcoAdapter?.kind === 'mock') {
+        res.status(409).json({
+          error: 'mock_mode',
+          message:
+            'This server is running with mock adapters. Restart without PCO_PRIME_SYNC_MOCK=1 to use real Planning Center credentials.',
+        });
+        return;
+      }
+      const parsed = pcoCredentialSchema.safeParse(req.body ?? {});
+      if (!parsed.success) {
+        res.status(400).json({
+          error: 'invalid_credentials',
+          message: 'Enter both the Planning Center application id and secret.',
+        });
+        return;
+      }
+      const result = await validatePcoCredentials(parsed.data);
+      res.status(result.ok ? 200 : 400).json(result);
+    }),
+  );
+
+  /** Validate, then store the token locally and swap the live adapter. */
+  app.post(
+    '/api/pco/credentials',
+    asyncHandler(async (req, res) => {
+      if (services.pcoAdapter?.kind === 'mock') {
+        res.status(409).json({
+          error: 'mock_mode',
+          message:
+            'This server is running with mock adapters. Restart without PCO_PRIME_SYNC_MOCK=1 to use real Planning Center credentials.',
+        });
+        return;
+      }
+      const parsed = pcoCredentialSchema.safeParse(req.body ?? {});
+      if (!parsed.success) {
+        res.status(400).json({
+          error: 'invalid_credentials',
+          message: 'Enter both the Planning Center application id and secret.',
+        });
+        return;
+      }
+
+      const check = await validatePcoCredentials(parsed.data);
+      if (!check.ok) {
+        // Never store credentials that Planning Center did not accept.
+        res.status(400).json({ ...check, saved: false });
+        return;
+      }
+
+      applyPcoCredentials(parsed.data);
+      const envPath = writePcoCredentialsToEnv(parsed.data);
+      services.repo.updateSettings({ pcoAppId: parsed.data.appId.trim() });
+      services.reconfigurePco(parsed.data.appId.trim(), parsed.data.secret.trim());
+      pcoStatusCache = null;
+
+      res.json({
+        ...check,
+        saved: true,
+        envFile: path.relative(process.cwd(), envPath) || envPath,
+        secretSource: services.pcoSecretSource(),
+      });
     }),
   );
 
@@ -589,7 +669,7 @@ export function createApp(services: Services): express.Express {
       res.status(202).json({
         ok: true,
         message:
-          'A Chromium window is opening. Log in to Loop Community there — the session is saved in the persistent profile.',
+          'A Chromium window is opening. Log in to Loop Community there — the session is saved in the persistent profile. Close the window when you are signed in; login state can only be verified after the selector contract is configured.',
       });
     }),
   );

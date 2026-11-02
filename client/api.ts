@@ -1,6 +1,7 @@
 import type {
   ChurchSettings,
   OverviewPayload,
+  PcoServiceType,
   PcoTeamConfiguration,
   PlanMusicianRecord,
   PlanSongRecord,
@@ -111,6 +112,20 @@ export const api = {
     ),
   saveSettings: (patch: Partial<ChurchSettings>) =>
     request<{ settings: ChurchSettings }>('/api/settings', { method: 'PUT', body: JSON.stringify(patch) }),
+  testPcoCredentials: (input: { appId: string; secret: string }) =>
+    request<{ ok: boolean; message: string; serviceTypes: PcoServiceType[] }>('/api/pco/credentials/test', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
+  savePcoCredentials: (input: { appId: string; secret: string }) =>
+    request<{
+      ok: boolean;
+      message: string;
+      serviceTypes: PcoServiceType[];
+      saved: boolean;
+      envFile: string;
+      secretSource: string;
+    }>('/api/pco/credentials', { method: 'POST', body: JSON.stringify(input) }),
   plans: () => request<{ plans: PlanDetail[]; windowDays: number; today: string; toDate: string }>('/api/plans'),
   teams: () => request<{ teams: TeamRow[]; warning: string | null }>('/api/pco/teams'),
   setWorshipTeam: (teamId: string, isWorshipTeam: boolean, teamName?: string) =>

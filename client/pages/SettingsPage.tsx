@@ -13,6 +13,12 @@ export function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [appIdInput, setAppIdInput] = useState('');
+  const [secretInput, setSecretInput] = useState('');
+  const [checkingCredentials, setCheckingCredentials] = useState(false);
+  const [credentialMessage, setCredentialMessage] = useState<string | null>(null);
+  const [credentialOk, setCredentialOk] = useState(false);
+  const [visibleServiceTypes, setVisibleServiceTypes] = useState<PcoServiceType[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -29,6 +35,7 @@ export function SettingsPage() {
       );
       setSecretSource(result.secretSource);
       setPrimeInitError(result.primeInitError);
+      setAppIdInput(result.settings.pcoAppId ?? '');
       setServiceTypeInput(result.settings.pcoServiceTypeIds.join(', '));
       setError(null);
     } catch (err) {
@@ -48,6 +55,53 @@ export function SettingsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
+  };
+
+  const testCredentials = async () => {
+    setCheckingCredentials(true);
+    setCredentialMessage(null);
+    setVisibleServiceTypes([]);
+    try {
+      const result = await api.testPcoCredentials({ appId: appIdInput, secret: secretInput });
+      setCredentialOk(result.ok);
+      setCredentialMessage(result.message);
+      setVisibleServiceTypes(result.serviceTypes);
+    } catch (err) {
+      setCredentialOk(false);
+      setCredentialMessage(err instanceof Error ? err.message : String(err));
+    } finally {
+      setCheckingCredentials(false);
+    }
+  };
+
+  const saveCredentials = async () => {
+    setCheckingCredentials(true);
+    setCredentialMessage(null);
+    try {
+      const result = await api.savePcoCredentials({ appId: appIdInput, secret: secretInput });
+      setCredentialOk(true);
+      setCredentialMessage(
+        `${result.message} Saved to ${result.envFile} with owner-only permissions (secret source: ${result.secretSource}).`,
+      );
+      setVisibleServiceTypes(result.serviceTypes);
+      setSecretInput('');
+      await load();
+    } catch (err) {
+      setCredentialOk(false);
+      setCredentialMessage(err instanceof Error ? err.message : String(err));
+    } finally {
+      setCheckingCredentials(false);
+    }
+  };
+
+  const addServiceType = (id: string) => {
+    setServiceTypeInput((current) => {
+      const ids = current
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean);
+      return ids.includes(id) ? current : [...ids, id].join(', ');
+    });
   };
 
   const save = async (patch: Partial<ChurchSettings>) => {
@@ -95,18 +149,56 @@ export function SettingsPage() {
 
       <Card title="Planning Center credentials">
         <p style={{ marginTop: 0, fontSize: 13 }}>
-          Secret source: <strong>{secretSource}</strong>. Add <span className="mono">PCO_APP_ID</span> and{' '}
-          <span className="mono">PCO_SECRET</span> to <span className="mono">.env</span> (or the macOS Keychain) and restart
-          the server. They are never stored in SQLite.
+          Paste a Personal Access Token to test it against Planning Center and save it. The secret is written to the local{' '}
+          <span className="mono">.env</span> file with owner-only permissions — never to SQLite, the browser bundle or the
+          logs. Current source: <strong>{secretSource}</strong>.
         </p>
-        <Field label="PCO application id (optional, display only)" hint="Not a secret; the matching secret must be in .env.">
-          <input
-            type="text"
-            value={settings.pcoAppId ?? ''}
-            onChange={(event) => setSettings({ ...settings, pcoAppId: event.target.value })}
-            placeholder="e.g. 6f1c8f9a…"
-          />
-        </Field>
+        <div className="grid grid-2">
+          <Field label="Application ID" hint="From api.planningcenteronline.com/oauth/applications">
+            <input
+              type="text"
+              value={appIdInput}
+              onChange={(event) => setAppIdInput(event.target.value)}
+              placeholder="application id"
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </Field>
+          <Field label="Secret" hint="Tested against Planning Center first, then stored locally. Never returned by the API.">
+            <input
+              type="password"
+              value={secretInput}
+              onChange={(event) => setSecretInput(event.target.value)}
+              placeholder="••••••••"
+              autoComplete="new-password"
+            />
+          </Field>
+        </div>
+        <div className="actions">
+          <Button onClick={() => void testCredentials()} disabled={checkingCredentials}>
+            {checkingCredentials ? 'Checking…' : 'Test connection'}
+          </Button>
+          <Button variant="primary" onClick={() => void saveCredentials()} disabled={checkingCredentials || saving}>
+            Save and connect
+          </Button>
+        </div>
+        {credentialMessage ? (
+          <div className={`banner ${credentialOk ? 'banner-info' : 'banner-error'}`}>{credentialMessage}</div>
+        ) : null}
+        {visibleServiceTypes.length > 0 ? (
+          <div style={{ marginTop: 6 }}>
+            <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
+              Service types this token can see — click one to add its id:
+            </p>
+            <div className="actions">
+              {visibleServiceTypes.map((type) => (
+                <Button key={type.id} onClick={() => addServiceType(type.id)}>
+                  {type.name} ({type.id})
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <Field
           label="Service type IDs"
           hint="Comma-separated Planning Center service type ids (Services → service type URL). Used to fetch plans and teams."
@@ -124,7 +216,7 @@ export function SettingsPage() {
             disabled={saving}
             onClick={() =>
               void save({
-                pcoAppId: settings.pcoAppId?.trim() ? settings.pcoAppId.trim() : null,
+                pcoAppId: appIdInput.trim() ? appIdInput.trim() : null,
                 pcoServiceTypeIds: serviceTypeInput
                   .split(',')
                   .map((value) => value.trim())

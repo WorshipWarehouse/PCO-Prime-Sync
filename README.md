@@ -38,6 +38,16 @@ The mock adapters are never used automatically in production: they require `--mo
 
 Mock Loop state lives in memory for the lifetime of one process. In the dev server this makes repeated syncs idempotent (run twice and the second run applies zero changes); the one-shot `npm run sync -- --mock` CLI starts a fresh mock Loop each time, so a second invocation correctly reports the previously recorded setlists as missing. Use the dev server for a repeatable demo.
 
+### Test locally in three stages
+
+The order matters, because each stage isolates one kind of failure:
+
+1. **App runs, no credentials** — `PCO_PRIME_SYNC_MOCK=1 npm run dev`. Confirm the dashboard, plan import, matching screens, preview, dry run and a second sync with zero changes. Nothing outside your Mac is touched.
+2. **Real token and real Loop login** — restart without the mock flag (`npm run dev`), then in **Settings** paste the PCO Personal Access Token, press *Test connection* (Planning Center answers with the service types the token can see), *Save and connect*, choose the service types and load teams. Then **Overview → Log in to Loop** and sign in by hand in the Chromium window. This stage proves credentials and the session without writing a single setlist.
+3. **Real setlists** — `npm run prime:explore` to fill `config/prime-selectors.json` from the real Loop UI, verify one plan manually, then preview → dry run → sync. This is the first stage that can change Loop, and it only starts after the earlier stages are green.
+
+Each stage keeps the next one's failure understandable: a bad token never looks like a broken selector, and an unauthenticated Loop session never looks like a PCO problem.
+
 ---
 
 ## Requirements
@@ -56,15 +66,14 @@ npm install
 npx playwright install chromium
 
 cp .env.example .env
-chmod 600 .env
-# edit .env: PCO_APP_ID, PCO_SECRET
+chmod 600 .env         # optional — you can also paste the token in Settings
 
 npm run dev            # API on 127.0.0.1:5178 + dashboard on 127.0.0.1:3000
 ```
 
 Then in the dashboard:
 
-1. **Settings → Planning Center**: service type IDs → *Load teams from Planning Center*.
+1. **Settings → Planning Center**: paste the Personal Access Token → *Test connection* (it lists the service types that token can see) → *Save and connect* → pick service types → *Load teams from Planning Center*.
 2. Select only the **worship teams** (not audio, camera, livestream, production).
 3. **Overview → Log in to Loop** and sign in manually in the Chromium window.
 4. `npm run prime:explore` to derive the selector contract from the real Loop site, then fill `config/prime-selectors.json`.
@@ -113,7 +122,7 @@ Safety rules encoded and tested:
 
 ## Security
 
-- Credentials live only in `.env` (git-ignored) or the macOS Keychain, and are never sent to the browser.
+- Credentials live only in `.env` (git-ignored, `0600`) or the macOS Keychain, and are never sent back to the browser. The Settings form tests the token against Planning Center before writing it and never stores it in SQLite.
 - Browser profile directories are git-ignored and created with owner-only permissions.
 - The server binds to `127.0.0.1` by default, rejects cross-origin mutations, requires an explicit `x-pco-prime-sync` header on writes, and supports an optional `ADMIN_TOKEN`.
 - Logs never include tokens, cookies or passwords.

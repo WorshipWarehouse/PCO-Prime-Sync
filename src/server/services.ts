@@ -38,7 +38,7 @@ export class Services {
   readonly repo: Repository;
   readonly engine: SyncEngine;
   readonly scheduler: DailyScheduler;
-  readonly pcoAdapter: PcoAdapter | null;
+  private _pcoAdapter: PcoAdapter | null;
   readonly primeAdapter: PrimeAdapter | null;
   readonly primeInitError: string | null;
   private job: SyncJobState = {
@@ -50,6 +50,10 @@ export class Services {
     error: null,
   };
   private readonly mock: boolean;
+
+  get pcoAdapter(): PcoAdapter | null {
+    return this._pcoAdapter;
+  }
 
   constructor(options: ServicesOptions = {}) {
     this.env = loadEnv();
@@ -73,7 +77,7 @@ export class Services {
     } else {
       pco = null;
     }
-    this.pcoAdapter = pco;
+    this._pcoAdapter = pco;
 
     let prime: PrimeAdapter | null;
     let primeInitError: string | null = null;
@@ -120,6 +124,24 @@ export class Services {
     if (options.startScheduler ?? false) {
       this.scheduler.start();
     }
+  }
+
+  /**
+   * Replace the Planning Center adapter after the administrator enters a token
+   * in the dashboard, so no server restart is required.
+   */
+  reconfigurePco(appId: string, secret: string): void {
+    this._pcoAdapter = new HttpPcoAdapter({
+      appId,
+      secret,
+      timezone: this.repo.getSettings().timezone,
+    });
+    this.engine.setPcoAdapter(this._pcoAdapter);
+  }
+
+  /** Read the current secret source fresh (it can change while the server runs). */
+  pcoSecretSource(): AppEnv['pcoSecretSource'] {
+    return loadEnv().pcoSecretSource;
   }
 
   /** One sync at a time; the dashboard polls `/api/sync/status`. */

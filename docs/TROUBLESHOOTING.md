@@ -5,7 +5,16 @@ Everything below refers to the local app. Errors are also visible in **Synchroni
 ## Planning Center
 
 **`Planning Center credentials are not configured`**
-`PCO_APP_ID` / `PCO_SECRET` are missing or empty. Add them to `.env` and restart the server. If you use the Keychain, check `PCO_SECRET_KEYCHAIN_SERVICE` and that you are on macOS.
+No token is stored. Open Settings, paste the Personal Access Token, press *Test connection*, then *Save and connect*. (You can still add `PCO_APP_ID` / `PCO_SECRET` to `.env` and restart instead. If you use the Keychain, check `PCO_SECRET_KEYCHAIN_SERVICE` and that you are on macOS.)
+
+**`mock_mode` when saving a token**
+The server is running with `PCO_PRIME_SYNC_MOCK=1`. Stop it and start `npm run dev` without the flag — a demo server intentionally refuses to store real credentials.
+
+**The token tests fine but plan import fails**
+`Test connection` only proves the token can read service types. Confirm the token has **Services** access, that the service type ids are the numeric ids from the Services URL, and check **Errors and warnings** for the exact PCO failure.
+
+**Saving the token did not require a restart — is that expected?**
+Yes. The server revalidates the token, writes `.env` (mode `0600`), reloads its environment and swaps the Planning Center adapter in place.
 
 **`Planning Center rejected the credentials` (401/403)**
 Regenerate the Personal Access Token, make sure it has Services access, and verify the app ID belongs to the same token. Secrets are read once at startup — restart after changing them.
@@ -28,7 +37,7 @@ The PCO client throttles to ~1 request per 650 ms and retries 429/5xx with backo
 Click **Overview → Log in to Loop**, log in in the window (including 2FA), then sync again. The session is stored in the persistent profile; it survives restarts but not a manual sign-out or a Loop-side expiry.
 
 **`Login state cannot be detected yet`**
-No `loggedInIndicator`/`loggedOutIndicator` selector is configured. Run `npm run prime:explore` and fill `config/prime-selectors.json`.
+No `loggedInIndicator`/`loggedOutIndicator` selector is configured. Run `npm run prime:explore` and fill `config/prime-selectors.json`. The login window still saves the Loop session cookies into the profile — closing it after signing in is enough for the next stage; only the *reported* state waits for selectors.
 
 **`Loop Prime website layout is not configured for …: missing selector(s) …`**
 Expected until the selector contract is filled from the real site. Run the explorer, add the selectors, and re-test. The app intentionally refuses to guess.
