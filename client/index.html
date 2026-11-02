@@ -5,6 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <title>PCO Prime Sync</title>
+    <!--
+      Watchdog: a plain classic script so it runs even when the module bundle is
+      rejected by the browser (Safari is strict, and a parse error there leaves a
+      titled blank page with nothing to report). It only speaks up if the app
+      rendered nothing, and it names the error instead of guessing.
+    -->
+    <script>
+      (function () {
+        var problems = [];
+        window.addEventListener('error', function (event) {
+          var target = event.target;
+          if (target && target.tagName === 'SCRIPT') {
+            problems.push('Failed to load ' + (target.src || 'a script') + ' (status unavailable)');
+            return;
+          }
+          problems.push(
+            (event.message || 'Script error') +
+              (event.filename ? ' — ' + event.filename + ':' + (event.lineno || 0) : ''),
+          );
+        }, true);
+        window.addEventListener('unhandledrejection', function (event) {
+          var reason = event.reason;
+          problems.push('Unhandled rejection: ' + ((reason && reason.message) || String(reason)));
+        });
+
+        function report() {
+          var root = document.getElementById('root');
+          if (!root || root.childElementCount > 0) return;
+          var box = document.createElement('div');
+          box.style.cssText =
+            'font:14px/1.6 system-ui,-apple-system,sans-serif;margin:48px auto;max-width:680px;padding:24px;' +
+            'border:1px solid #b42318;border-radius:10px;color:#111;background:#fff';
+          var heading = document.createElement('h1');
+          heading.textContent = 'PCO Prime Sync could not start in this browser';
+          heading.style.cssText = 'font-size:18px;margin:0 0 10px';
+          var body = document.createElement('p');
+          body.style.cssText = 'margin:0 0 10px';
+          body.textContent =
+            'The page loaded, but its JavaScript did not run. This is usually a stale build (run `npm run build` or restart `npm run dev` and reload) or a browser that cannot parse the bundle.';
+          var details = document.createElement('pre');
+          details.style.cssText = 'white-space:pre-wrap;font-size:12px;color:#b42318;margin:0';
+          details.textContent =
+            'Browser: ' + navigator.userAgent + '\nURL: ' + location.href + '\n' +
+            (problems.length ? problems.join('\n') : 'No script error was reported.');
+          box.append(heading, body, details);
+          root.replaceChildren(box);
+        }
+
+        // Give the module time to boot, then report only if nothing rendered.
+        window.addEventListener('load', function () {
+          setTimeout(report, 4000);
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
