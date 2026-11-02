@@ -14,10 +14,54 @@
     <script>
       (function () {
         var problems = [];
+        var probes = [];
+
+        // A script error event carries no status, so ask the server directly.
+        // "Failed to load /main.tsx (status unavailable)" is unactionable; the
+        // answer, the content type and the port are not.
+        function describe(src) {
+          probes.push(
+            fetch(src, { cache: 'no-store' })
+              .then(function (response) {
+                var type = response.headers.get('content-type') || 'no content type';
+                var line =
+                  'Failed to load ' + src + ' (HTTP ' + response.status + ', ' + type + ')';
+                if (response.status >= 400) {
+                  return line + ' — the server has no such file. Restart `npm run dev` and reload.';
+                }
+                if (type.indexOf('html') !== -1) {
+                  return (
+                    line +
+                    ' — the server answered with the HTML page instead of JavaScript, so whatever is on this port does not compile .tsx. Stop it and start `npm run dev`, which puts Vite on port 3000.'
+                  );
+                }
+                if (type.indexOf('javascript') === -1 && type.indexOf('ecmascript') === -1) {
+                  return (
+                    line +
+                    ' — served as ' +
+                    type +
+                    ' instead of JavaScript, so the browser refused it. That process is serving the folder as plain files; stop it and start `npm run dev`.'
+                  );
+                }
+                return line + ' — delivered as JavaScript, so the script itself was rejected.';
+              })
+              .catch(function (error) {
+                return (
+                  'Failed to load ' +
+                  src +
+                  ' (no response: ' +
+                  ((error && error.message) || 'network error') +
+                  ')'
+                );
+              }),
+          );
+        }
+
         window.addEventListener('error', function (event) {
           var target = event.target;
           if (target && target.tagName === 'SCRIPT') {
-            problems.push('Failed to load ' + (target.src || 'a script') + ' (status unavailable)');
+            if (target.src) describe(target.src);
+            else problems.push('Failed to load an inline script');
             return;
           }
           problems.push(
@@ -30,7 +74,7 @@
           problems.push('Unhandled rejection: ' + ((reason && reason.message) || String(reason)));
         });
 
-        function report() {
+        function render() {
           var root = document.getElementById('root');
           if (!root || root.childElementCount > 0) return;
           var box = document.createElement('div');
@@ -51,6 +95,20 @@
             (problems.length ? problems.join('\n') : 'No script error was reported.');
           box.append(heading, body, details);
           root.replaceChildren(box);
+        }
+
+        function report() {
+          var root = document.getElementById('root');
+          if (!root || root.childElementCount > 0) return;
+          if (probes.length === 0) {
+            render();
+            return;
+          }
+          // Wait for the probes so the message can state the real status.
+          Promise.all(probes).then(function (lines) {
+            problems = problems.concat(lines);
+            render();
+          });
         }
 
         // Give the module time to boot, then report only if nothing rendered.

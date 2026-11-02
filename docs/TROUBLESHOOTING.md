@@ -2,6 +2,22 @@
 
 Everything below refers to the local app. Errors are also visible in **Synchronization → Errors and warnings** with a stable `code`.
 
+## Dashboard
+
+**`PCO Prime Sync could not start in this browser` and the error names `/main.tsx`**
+`/main.tsx` is the development entry point, so the page you loaded is the unbuilt `client/index.html`, and whatever answered on port 3000 did not compile TypeScript. `npm run dev` puts Vite on port 3000; if that port was already held by an older process (a previous run, a static file server, `vite preview`), Vite used to give the port up silently and the old process kept answering with the raw source file. Find it and stop it:
+
+```bash
+lsof -nP -iTCP:3000 -sTCP:LISTEN    # note the PID, then
+kill <PID>
+npm run dev                        # dashboard: http://127.0.0.1:3000
+```
+
+Vite now fails with `Port 3000 is already in use` instead of quietly moving to 3001, so this cannot happen unnoticed again. The `Failed to load …` line under **Browser:** states the HTTP status and content type, which separates a stale server (HTML or the wrong type on that port) from a missing file (404).
+
+**Blank page with the correct title and no message**
+That means the module bundle was rejected before the app could run. Reload with the cache disabled, restart `npm run dev` (or re-run `npm run build` for `npm start`), and check the browser console. For a production run, confirm you are on the URL `npm start` prints — the server rejects writes from a different host or port.
+
 ## Planning Center
 
 **`Planning Center credentials are not configured`**

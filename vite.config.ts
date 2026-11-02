@@ -30,7 +30,12 @@ export default defineConfig({
   server: {
     port: Number(process.env.VITE_PORT ?? 3000),
     host: true,
-    strictPort: false,
+    // The docs tell people to open port 3000. If Vite silently moved to 3001
+    // because a stale process held 3000, that stale process serves the raw
+    // client/index.html and the browser asks it for /main.tsx, which it cannot
+    // compile — a blank page that looks like a Safari bug. Failing loudly is
+    // the honest behaviour.
+    strictPort: true,
     ...(allowedHosts.length > 0 ? { allowedHosts } : {}),
     proxy: {
       '/api': {
