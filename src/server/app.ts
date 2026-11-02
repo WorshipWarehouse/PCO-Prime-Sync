@@ -696,7 +696,9 @@ export function createApp(services: Services): express.Express {
         ok: true,
         loginUrl,
         window: opened,
-        message: `Login window now shows ${shown} at ${opened.url}. Sign in there with your own Loop Community credentials, then close the window.${blankWarning}`,
+        message:
+          `Login window now shows ${shown} at ${opened.url}. Sign in there with your own Loop Community credentials, then close the window.${blankWarning}` +
+          (opened.note ? ` ${opened.note}` : ''),
       });
     }),
   );

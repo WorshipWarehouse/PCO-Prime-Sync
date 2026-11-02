@@ -81,6 +81,8 @@ export interface CreateSetlistInput {
 export interface LoginWindowInfo {
   url: string;
   title: string;
+  /** Set when the window ended somewhere other than the page it was sent to. */
+  note?: string;
 }
 
 export interface PrimeAdapter {

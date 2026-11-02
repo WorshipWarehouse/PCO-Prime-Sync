@@ -244,23 +244,44 @@ export class PrimeBrowserSession {
     await page
       .waitForLoadState('load', { timeout: Math.min(this.actionTimeoutMs, 20_000) })
       .catch(() => undefined);
-    const finalUrl = page.url();
-    const title = await page.title().catch(() => '');
-    // A window sitting on the marketing site looks open and healthy but can
-    // never log anyone in, so say that instead of reporting a launch.
+    const primeEntry = `${this.baseUrl}${LOOP_PRIME_ENTRY_PATH}`;
+    let finalUrl = page.url();
+    let title = await page.title().catch(() => '');
+    let note: string | undefined;
+
+    // A window on the marketing site looks open and healthy but can never log
+    // anyone in. When a configured login page is the dead end, finish the job at
+    // the Prime app rather than failing the login that was asked for — and say
+    // so, because the window is not where it was sent.
+    if (isMarketingDeadEnd(finalUrl) && this.loginUrl !== primeEntry) {
+      note = `${this.loginUrl} redirected to WorshipTools' marketing site (${finalUrl}), which has no sign-in form, so the window moved on to the Prime app instead.`;
+      try {
+        await page.goto(primeEntry, { waitUntil: 'domcontentloaded', timeout: this.actionTimeoutMs });
+      } catch (error) {
+        const failure = explainLoginNavigationFailure(error, primeEntry);
+        throw Object.assign(new Error(failure.message, { cause: error }), { hint: failure.hint });
+      }
+      await page
+        .waitForLoadState('load', { timeout: Math.min(this.actionTimeoutMs, 20_000) })
+        .catch(() => undefined);
+      finalUrl = page.url();
+      title = await page.title().catch(() => '');
+    }
+
     if (isMarketingDeadEnd(finalUrl)) {
       throw Object.assign(
         new Error(
-          `The login window opened ${this.loginUrl}, but the site redirected to ${finalUrl}, WorshipTools' marketing page, which has no sign-in form.`,
+          `The login window opened ${primeEntry}, but the site redirected to ${finalUrl}, WorshipTools' marketing page, which has no sign-in form.`,
         ),
         {
-          hint: 'That address is not a login page any more. Leave PRIME_LOGIN_URL unset so the window starts at the Prime app, which redirects to the real sign-in itself.',
+          hint: 'Loop Community is sending sign-in traffic to the marketing site. Check the Prime base URL in Settings and try again; if it keeps happening, the site has changed its login flow.',
         },
       );
     }
+
     // Report what the window is showing: an empty title means it painted
     // nothing, which is otherwise indistinguishable from a healthy window.
-    return { url: finalUrl, title };
+    return { url: finalUrl, title, ...(note ? { note } : {}) };
   }
 
   /**
