@@ -16,6 +16,8 @@ export interface AppEnv {
   pcoSecret: string | null;
   pcoSecretSource: 'env' | 'keychain' | 'missing';
   primeBaseUrl: string;
+  /** Optional starting page for the manual login window; empty means the Prime app. */
+  primeLoginUrl: string | null;
   primeProfileDir: string;
   primeHeadless: boolean;
   primeLoginTimeoutMs: number;
@@ -70,6 +72,7 @@ export function loadEnv(overrides: Partial<AppEnv> = {}): AppEnv {
     pcoSecret: secretInfo.secret,
     pcoSecretSource: secretInfo.source,
     primeBaseUrl: process.env.PRIME_BASE_URL?.trim() || 'https://loopcommunity.com',
+    primeLoginUrl: process.env.PRIME_LOGIN_URL?.trim() || null,
     primeProfileDir: base,
     primeHeadless: (process.env.PRIME_HEADLESS ?? 'false').toLowerCase() === 'true',
     primeLoginTimeoutMs: Number(process.env.PRIME_LOGIN_TIMEOUT_MS ?? 300_000),

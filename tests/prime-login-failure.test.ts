@@ -3,6 +3,7 @@ import {
   DEFAULT_PRIME_BASE_URL,
   LOOP_PRIME_ENTRY_PATH,
   explainLoginNavigationFailure,
+  isMarketingDeadEnd,
 } from '../src/server/prime/playwright/session';
 
 const loginUrl = 'https://prime.loopcommunity.com/prime-multitrack-app';
@@ -42,5 +43,22 @@ describe('login navigation failures', () => {
 
     expect(result.message).toContain(loginUrl);
     expect(result.hint).toContain('Prime base URL');
+  });
+});
+
+describe('marketing dead end', () => {
+  it('recognises where the old auth URL actually ends up', () => {
+    expect(isMarketingDeadEnd('https://www.worshiptools.com/en-us')).toBe(true);
+    expect(isMarketingDeadEnd('https://worshiptools.com')).toBe(true);
+  });
+
+  it('leaves the Prime app and the auth host alone', () => {
+    expect(isMarketingDeadEnd(`${DEFAULT_PRIME_BASE_URL}${LOOP_PRIME_ENTRY_PATH}`)).toBe(false);
+    expect(isMarketingDeadEnd('https://auth.worshiptools.com/login')).toBe(false);
+  });
+
+  it('ignores values that are not URLs', () => {
+    expect(isMarketingDeadEnd('not a url')).toBe(false);
+    expect(isMarketingDeadEnd('')).toBe(false);
   });
 });

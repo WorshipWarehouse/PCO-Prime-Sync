@@ -16,6 +16,23 @@ export const LOOP_PRIME_ENTRY_PATH = '/prime-multitrack-app';
 /** Where the Prime app actually lives when nothing is configured. */
 export const DEFAULT_PRIME_BASE_URL = 'https://loopcommunity.com';
 
+/**
+ * WorshipTools' marketing site. https://auth.worshiptools.com/login answers
+ * with a 302 that ends here, so opening it shows a brochure with no sign-in
+ * form: the flow has to start at the Prime app, which passes the parameters
+ * the auth host needs.
+ */
+export const WORSHIPTOOLS_MARKETING_HOSTS = ['www.worshiptools.com', 'worshiptools.com'];
+
+/** True when a URL ended up on WorshipTools' marketing site instead of a login. */
+export function isMarketingDeadEnd(url: string): boolean {
+  try {
+    return WORSHIPTOOLS_MARKETING_HOSTS.includes(new URL(url).host);
+  } catch {
+    return false;
+  }
+}
+
 export interface LoginNavigationFailure {
   message: string;
   hint: string;
@@ -227,9 +244,23 @@ export class PrimeBrowserSession {
     await page
       .waitForLoadState('load', { timeout: Math.min(this.actionTimeoutMs, 20_000) })
       .catch(() => undefined);
+    const finalUrl = page.url();
+    const title = await page.title().catch(() => '');
+    // A window sitting on the marketing site looks open and healthy but can
+    // never log anyone in, so say that instead of reporting a launch.
+    if (isMarketingDeadEnd(finalUrl)) {
+      throw Object.assign(
+        new Error(
+          `The login window opened ${this.loginUrl}, but the site redirected to ${finalUrl}, WorshipTools' marketing page, which has no sign-in form.`,
+        ),
+        {
+          hint: 'That address is not a login page any more. Leave PRIME_LOGIN_URL unset so the window starts at the Prime app, which redirects to the real sign-in itself.',
+        },
+      );
+    }
     // Report what the window is showing: an empty title means it painted
     // nothing, which is otherwise indistinguishable from a healthy window.
-    return { url: page.url(), title: await page.title().catch(() => '') };
+    return { url: finalUrl, title };
   }
 
   /**

@@ -95,6 +95,7 @@ export class Services {
             : path.resolve(this.env.primeProfileDir),
           headless: this.env.primeHeadless || settings.primeHeadless,
           baseUrl: settings.primeBaseUrl || this.env.primeBaseUrl,
+          loginUrl: this.env.primeLoginUrl ?? undefined,
           loginTimeoutMs: this.env.primeLoginTimeoutMs,
           actionTimeoutMs: this.env.primeActionTimeoutMs,
           selectorConfig: config,
