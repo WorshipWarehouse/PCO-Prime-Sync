@@ -13,6 +13,66 @@ import { loadSelectorConfig, type PrimeSelectorConfig } from './selectors';
  */
 export const LOOP_PRIME_ENTRY_PATH = '/prime-multitrack-app';
 
+/** Where the Prime app actually lives when nothing is configured. */
+export const DEFAULT_PRIME_BASE_URL = 'https://loopcommunity.com';
+
+export interface LoginNavigationFailure {
+  message: string;
+  hint: string;
+}
+
+/**
+ * Turn a navigation error into something the administrator can act on.
+ *
+ * The browser normally launched fine and the page did not load, so telling
+ * people to reinstall Chromium sends them after a browser that already worked.
+ * The cause decides the fix, and a wrong base URL is the common one: a
+ * configured `https://prime.loopcommunity.com` resolves nowhere.
+ */
+export function explainLoginNavigationFailure(
+  error: unknown,
+  loginUrl: string,
+): LoginNavigationFailure {
+  const raw = error instanceof Error ? error.message : String(error);
+  let host = loginUrl;
+  try {
+    host = new URL(loginUrl).host;
+  } catch {
+    // Keep the raw URL when it cannot be parsed.
+  }
+  const fixBaseUrl =
+    `The Prime app is at ${DEFAULT_PRIME_BASE_URL}${LOOP_PRIME_ENTRY_PATH}, so the configured base URL is wrong. ` +
+    'Correct Settings → Prime base URL (or PRIME_BASE_URL in .env) and try again.';
+
+  if (raw.includes('ERR_NAME_NOT_RESOLVED')) {
+    return {
+      message: `Loop Community could not be reached: the host ${host} does not resolve (net::ERR_NAME_NOT_RESOLVED).`,
+      hint: fixBaseUrl,
+    };
+  }
+  if (
+    raw.includes('ERR_CONNECTION_REFUSED') ||
+    raw.includes('ERR_INTERNET_DISCONNECTED') ||
+    raw.includes('ERR_NETWORK_CHANGED') ||
+    raw.includes('ERR_CONNECTION_RESET')
+  ) {
+    return {
+      message: `Loop Community could not be reached at ${loginUrl}: the connection failed.`,
+      hint: 'Check that this computer is online and that the Prime base URL in Settings points at a real host.',
+    };
+  }
+  if (/timeout/i.test(raw)) {
+    return {
+      message: `The login window opened, but ${loginUrl} did not finish loading in time.`,
+      hint: 'Check the connection and the Prime base URL in Settings, then try again.',
+    };
+  }
+  return {
+    message: `The login window opened, but ${loginUrl} could not be loaded.`,
+    hint: fixBaseUrl,
+  };
+}
+
 export interface PrimeSessionOptions {
   profileDir: string;
   headless: boolean;
@@ -153,9 +213,15 @@ export class PrimeBrowserSession {
     }
     await this.ensureContext();
     const page = await this.page();
-    // Go straight to the WorshipTools auth page: that is where Loop Community
-    // actually signs people in, and it sets the cookies the Prime site reads.
-    await page.goto(this.loginUrl, { waitUntil: 'domcontentloaded', timeout: this.actionTimeoutMs });
+    // Go straight to the Prime app: it redirects to WorshipTools' shared sign-in
+    // with parameters only the site knows, and that is where the cookies the
+    // Prime site reads come from.
+    try {
+      await page.goto(this.loginUrl, { waitUntil: 'domcontentloaded', timeout: this.actionTimeoutMs });
+    } catch (error) {
+      const { message, hint } = explainLoginNavigationFailure(error, this.loginUrl);
+      throw Object.assign(new Error(message, { cause: error }), { hint });
+    }
     // Let the site's own redirect to the WorshipTools sign-in settle before the
     // request returns, so the window never sits on a blank intermediate page.
     await page

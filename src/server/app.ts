@@ -671,12 +671,20 @@ export function createApp(services: Services): express.Express {
       try {
         opened = await services.primeAdapter.startManualLogin();
       } catch (error) {
-        const reason = (error instanceof Error ? error.message : String(error)).split('\n')[0];
+        const failure = error as { message?: string; hint?: string } | null;
+        const reason = (failure?.message ?? String(error)).split('\n')[0];
+        // The session attaches a hint when it knows the cause. Only fall back to
+        // the browser-install advice when it does not: a page that failed to load
+        // is not a Chromium that failed to start.
+        const hint =
+          typeof failure?.hint === 'string'
+            ? failure.hint
+            : 'Chromium could not start — run `npx playwright install chromium`, and on Linux it may also need system libraries. The window opens on the machine running PCO Prime Sync, so a remote or headless server cannot show it: run the app on your own Mac (npm run dev) to log in.';
         console.error('[prime] could not open the login window:', reason);
         res.status(502).json({
           error: 'login_window_failed',
           loginUrl,
-          message: `Could not open the login window on this computer: ${reason}. Chromium could not start — run \`npx playwright install chromium\`, and on Linux it may also need system libraries. The window opens on the machine running PCO Prime Sync, so a remote or headless server cannot show it: run the app on your own Mac (npm run dev) to log in.`,
+          message: `Could not open the login window on this computer: ${reason} ${hint}`,
         });
         return;
       }
