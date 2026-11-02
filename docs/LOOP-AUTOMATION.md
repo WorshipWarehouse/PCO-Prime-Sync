@@ -29,6 +29,14 @@ There is no public Loop Community API. PCO Prime Sync drives the **visible websi
 | Read Prime Team members | `listTeamMembers` | Requires configured selectors |
 | Delete setlist | Not implemented on purpose | Never |
 
+## Sign-in: Loop Community uses WorshipTools' shared identity
+
+Loop Community is part of WorshipTools, and Prime signs in through its shared identity service. That is why the login window opens a Loop page instead of an auth URL: the sign-in form only appears when an app requests it with parameters it generates.
+
+`https://auth.worshiptools.com/login` on its own answers `302 → https://www.worshiptools.com`, WorshipTools' corporate home, which contains no form — measured in a clean Chromium profile: zero password fields, zero email fields, with and without the common `redirect`/`returnTo`/`app`/`client_id` parameters. `https://loopcommunity.com/prime-multitrack-app` answers `200` and does present an email field, so the window starts there and lets the site perform its own redirect into the shared sign-in.
+
+`PRIME_LOGIN_URL` overrides the window's start page. If the configured page lands on the WorshipTools home page, the window continues to the Prime app and the response says so, rather than leaving an administrator on a page that cannot sign anyone in.
+
 ## Discovering the real UI
 
 ```bash

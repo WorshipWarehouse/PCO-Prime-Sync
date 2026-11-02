@@ -17,10 +17,11 @@ export const LOOP_PRIME_ENTRY_PATH = '/prime-multitrack-app';
 export const DEFAULT_PRIME_BASE_URL = 'https://loopcommunity.com';
 
 /**
- * WorshipTools' marketing site. https://auth.worshiptools.com/login answers
- * with a 302 that ends here, so opening it shows a brochure with no sign-in
- * form: the flow has to start at the Prime app, which passes the parameters
- * the auth host needs.
+ * WorshipTools' corporate home. Loop Community is part of WorshipTools and
+ * signs in through its shared identity service, but
+ * https://auth.worshiptools.com/login answers with a 302 that ends here: the
+ * sign-in form only appears when a Loop app requests it with the parameters it
+ * generates. Opening the auth path on its own cannot log anyone in.
  */
 export const WORSHIPTOOLS_MARKETING_HOSTS = ['www.worshiptools.com', 'worshiptools.com'];
 
@@ -255,7 +256,7 @@ export class PrimeBrowserSession {
     // the Prime app rather than failing the login that was asked for — and say
     // so, because the window is not where it was sent.
     if (isMarketingDeadEnd(finalUrl) && this.loginUrl !== primeEntry) {
-      note = `${this.loginUrl} redirected to WorshipTools' marketing site (${finalUrl}), which has no sign-in form, so the window moved on to the Prime app instead.`;
+      note = `${this.loginUrl} redirected to WorshipTools' home page (${finalUrl}). Loop Community signs in through WorshipTools' shared sign-in, which shows a form only when a Loop app asks for it with its own parameters, so the window moved on to the Prime app instead.`;
       try {
         await page.goto(primeEntry, { waitUntil: 'domcontentloaded', timeout: this.actionTimeoutMs });
       } catch (error) {
@@ -272,10 +273,10 @@ export class PrimeBrowserSession {
     if (isMarketingDeadEnd(finalUrl)) {
       throw Object.assign(
         new Error(
-          `The login window opened ${primeEntry}, but the site redirected to ${finalUrl}, WorshipTools' marketing page, which has no sign-in form.`,
+          `The login window opened ${primeEntry}, but the site redirected to ${finalUrl}, WorshipTools' home page, so the shared sign-in form never appeared.`,
         ),
         {
-          hint: 'Loop Community is sending sign-in traffic to the marketing site. Check the Prime base URL in Settings and try again; if it keeps happening, the site has changed its login flow.',
+          hint: 'Loop Community signs in through WorshipTools, and that form only appears when a Loop app requests it. Check the Prime base URL in Settings and try again; if this keeps happening, Loop has changed its login flow.',
         },
       );
     }

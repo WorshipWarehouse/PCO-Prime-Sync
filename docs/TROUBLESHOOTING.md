@@ -57,8 +57,8 @@ Click **Overview → Log in to Loop**, log in in the window (including 2FA), the
 **`Log in to Loop` reports it cannot open a window**
 The browser opens on the machine that runs the server, so a remote or headless host cannot show it — this is common when the app runs in a container or on another box. The message now includes the real reason. Run `npm run dev` on your own Mac to log in; the session is stored in `profiles/prime` on that machine. A missing Chromium also produces this error: run `npx playwright install chromium`.
 
-**`Log in to Loop` lands on WorshipTools' marketing page**
-`https://auth.worshiptools.com/login` is not a sign-in page any more: it answers 302 to `https://www.worshiptools.com`, a brochure with no form. The window has to start at the Prime app (`https://loopcommunity.com/prime-multitrack-app`), which redirects to the real sign-in with parameters only it can generate. Leave `PRIME_LOGIN_URL` unset, and if it is set, clear it. The app now names this dead end instead of reporting that a login window opened.
+**`Log in to Loop` lands on WorshipTools' home page**
+Loop Community is part of WorshipTools and signs in through its shared identity service, but `https://auth.worshiptools.com/login` on its own answers 302 to `https://www.worshiptools.com`, which has no form: that form only appears when a Loop app requests it with parameters it generates. Start the window at the Prime app (`https://loopcommunity.com/prime-multitrack-app`), which is what an empty `PRIME_LOGIN_URL` does. If `PRIME_LOGIN_URL` points at the auth path, the window falls back to the Prime app and the response says that it did.
 
 **`Login state cannot be detected yet`**
 No `loggedInIndicator`/`loggedOutIndicator` selector is configured. Run `npm run prime:explore` and fill `config/prime-selectors.json`. The login window still saves the Loop session cookies into the profile — closing it after signing in is enough for the next stage; only the *reported* state waits for selectors.
