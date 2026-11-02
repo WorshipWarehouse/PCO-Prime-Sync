@@ -703,10 +703,26 @@ export function createApp(services: Services): express.Express {
           // A cached index.html can outlive the hashed bundle it references, and
           // the result is a blank page with a correct title and no error.
           if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-store');
+          // Hashed build output never changes under the same name.
+          else if (filePath.includes(`${path.sep}assets${path.sep}`))
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          // A module script served with the wrong MIME type is refused, and
+          // Safari refuses it silently. State the type explicitly instead of
+          // depending on the mime database, and forbid sniffing.
+          if (filePath.endsWith('.js') || filePath.endsWith('.mjs'))
+            res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+          else if (filePath.endsWith('.css'))
+            res.setHeader('Content-Type', 'text/css; charset=utf-8');
+          res.setHeader('X-Content-Type-Options', 'nosniff');
         },
       }),
     );
-    app.get(/^\/(?!api\/).*/, (_req, res) => {
+    // Only page routes may fall back to the shell. Answering a missing
+    // /assets/*.js with the HTML shell is a 200 that renders nothing in any
+    // browser — the hardest possible blank page to diagnose.
+    app.get(/^\/(?!api\/).*/, (req, res, next) => {
+      const lastSegment = req.path.split('/').pop() ?? '';
+      if (/\.[a-z0-9]+$/i.test(lastSegment)) return next();
       res.setHeader('Cache-Control', 'no-store');
       res.sendFile(path.join(clientDir, 'index.html'));
     });
