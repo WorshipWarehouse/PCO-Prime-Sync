@@ -83,6 +83,7 @@ export class MockPrimeAdapter implements PrimeAdapter {
       state: this.authenticated ? 'authenticated' : 'needs_login',
       checkedAt: new Date().toISOString(),
       message: this.authenticated ? 'Mock Prime session authenticated' : 'Mock Prime session requires login',
+      loginUrl: this.loginUrl,
       currentUrl: null,
       profileDir: 'mock',
       headless: true,

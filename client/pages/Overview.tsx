@@ -31,7 +31,11 @@ export function OverviewPage({ onNavigate }: { onNavigate: (tab: Tab) => void })
 
   const load = useCallback(async () => {
     try {
-      setData(await api.overview());
+      const payload = await api.overview();
+      setData(payload);
+      // The server decides which page the login window opens, so show its answer
+      // rather than a client-side default that can drift from it.
+      setLoginUrl(payload.prime.loginUrl || DEFAULT_PRIME_ENTRY);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

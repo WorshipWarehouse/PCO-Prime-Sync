@@ -213,6 +213,8 @@ export interface PrimeSessionStatus {
   state: PrimeSessionState;
   checkedAt: IsoDateTime;
   message: string;
+  /** Page the login window opens, as configured on the server. */
+  loginUrl?: string;
   currentUrl: string | null;
   profileDir: string;
   headless: boolean;

@@ -191,6 +191,7 @@ export class PrimeBrowserSession {
           message: 'Loop Community Prime session is active',
           currentUrl,
           profileDir: this.profileDir,
+          loginUrl: this.loginUrl,
           headless: this.headless,
         };
       }
