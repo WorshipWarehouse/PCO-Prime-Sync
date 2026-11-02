@@ -4,6 +4,7 @@ import {
   LOOP_PRIME_ENTRY_PATH,
   explainLoginNavigationFailure,
   isMarketingDeadEnd,
+  loginLandingNote,
 } from '../src/server/prime/playwright/session';
 
 const loginUrl = 'https://prime.loopcommunity.com/prime-multitrack-app';
@@ -60,5 +61,29 @@ describe('marketing dead end', () => {
   it('ignores values that are not URLs', () => {
     expect(isMarketingDeadEnd('not a url')).toBe(false);
     expect(isMarketingDeadEnd('')).toBe(false);
+  });
+});
+
+describe('login landing report', () => {
+  it('reports the measured fields when the window sits on the home page', () => {
+    const note = loginLandingNote('https://www.worshiptools.com/en-us', { email: 0, password: 0 });
+
+    expect(note).toContain('0 email and 0 password fields');
+    expect(note).toContain('PRIME_LOGIN_URL');
+  });
+
+  it('says nothing when the window is on a real page', () => {
+    const note = loginLandingNote(`${DEFAULT_PRIME_BASE_URL}${LOOP_PRIME_ENTRY_PATH}`, {
+      email: 1,
+      password: 0,
+    });
+
+    expect(note).toBeNull();
+  });
+
+  it('copes with a page it could not inspect', () => {
+    expect(loginLandingNote('https://www.worshiptools.com', null)).toContain(
+      'no measurable sign-in fields',
+    );
   });
 });

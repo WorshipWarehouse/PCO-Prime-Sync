@@ -34,6 +34,30 @@ export function isMarketingDeadEnd(url: string): boolean {
   }
 }
 
+export interface SignInFieldCounts {
+  email: number;
+  password: number;
+}
+
+/**
+ * Explain a login window that landed on WorshipTools' home page instead of a
+ * form. The window is left where the site put it, so this is the report that
+ * takes the place of moving it somewhere else.
+ */
+export function loginLandingNote(
+  finalUrl: string,
+  counts: SignInFieldCounts | null,
+): string | null {
+  if (!isMarketingDeadEnd(finalUrl)) return null;
+  const measured = counts
+    ? `${counts.email} email and ${counts.password} password fields`
+    : 'no measurable sign-in fields';
+  return (
+    `The site redirected the window to ${finalUrl} (WorshipTools' home page), which has ${measured}. ` +
+    'Loop Community signs in through WorshipTools, and that form only appears when a Loop app requests it — set PRIME_LOGIN_URL to the Prime app entry if you need the form.'
+  );
+}
+
 export interface LoginNavigationFailure {
   message: string;
   hint: string;
@@ -246,41 +270,17 @@ export class PrimeBrowserSession {
     await page
       .waitForLoadState('load', { timeout: Math.min(this.actionTimeoutMs, 20_000) })
       .catch(() => undefined);
-    const primeEntry = `${this.baseUrl}${LOOP_PRIME_ENTRY_PATH}`;
-    let finalUrl = page.url();
-    let title = await page.title().catch(() => '');
-    let note: string | undefined;
-
-    // A window on the marketing site looks open and healthy but can never log
-    // anyone in. When a configured login page is the dead end, finish the job at
-    // the Prime app rather than failing the login that was asked for — and say
-    // so, because the window is not where it was sent.
-    if (isMarketingDeadEnd(finalUrl) && this.loginUrl !== primeEntry) {
-      note = `${this.loginUrl} redirected to WorshipTools' home page (${finalUrl}). Loop Community signs in through WorshipTools' shared sign-in, which shows a form only when a Loop app asks for it with its own parameters, so the window moved on to the Prime app instead.`;
-      try {
-        await page.goto(primeEntry, { waitUntil: 'domcontentloaded', timeout: this.actionTimeoutMs });
-      } catch (error) {
-        const failure = explainLoginNavigationFailure(error, primeEntry);
-        throw Object.assign(new Error(failure.message, { cause: error }), { hint: failure.hint });
-      }
-      await page
-        .waitForLoadState('load', { timeout: Math.min(this.actionTimeoutMs, 20_000) })
-        .catch(() => undefined);
-      finalUrl = page.url();
-      title = await page.title().catch(() => '');
-    }
-
-    if (isMarketingDeadEnd(finalUrl)) {
-      throw Object.assign(
-        new Error(
-          `The login window opened ${primeEntry}, but the site redirected to ${finalUrl}, WorshipTools' home page, so the shared sign-in form never appeared.`,
-        ),
-        {
-          hint: 'Loop Community signs in through WorshipTools, and that form only appears when a Loop app requests it. Check the Prime base URL in Settings and try again; if this keeps happening, Loop has changed its login flow.',
-        },
-      );
-    }
-
+    // Stay wherever the site sent the window. The administrator asked for a
+    // specific page, so reporting where it landed beats moving it along.
+    const finalUrl = page.url();
+    const title = await page.title().catch(() => '');
+    const signInFields = await page
+      .evaluate(() => ({
+        email: document.querySelectorAll('input[type="email"], input[name*="email" i]').length,
+        password: document.querySelectorAll('input[type="password"]').length,
+      }))
+      .catch(() => null);
+    const note = loginLandingNote(finalUrl, signInFields);
     // Report what the window is showing: an empty title means it painted
     // nothing, which is otherwise indistinguishable from a healthy window.
     return { url: finalUrl, title, ...(note ? { note } : {}) };
