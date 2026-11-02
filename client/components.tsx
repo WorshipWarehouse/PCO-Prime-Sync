@@ -90,6 +90,15 @@ export function EmptyState({ children }: { children: ReactNode }) {
   return <p className="empty">{children}</p>;
 }
 
+/** Opens outside the dashboard so preview panels hand it to the real browser. */
+export function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <a className="link" href={href} target="_blank" rel="noreferrer noopener">
+      {children}
+    </a>
+  );
+}
+
 export function ErrorBanner({ message }: { message: string | null }) {
   if (!message) return null;
   return (

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ChurchSettings, PcoServiceType } from '../../src/shared/types';
 import { api, type TeamRow } from '../api';
-import { Button, Card, ErrorBanner, Field, Spinner, formatDateTime } from '../components';
+import { Button, Card, ErrorBanner, ExternalLink, Field, Spinner, formatDateTime } from '../components';
 
 export function SettingsPage() {
   const [settings, setSettings] = useState<ChurchSettings | null>(null);
@@ -152,6 +152,13 @@ export function SettingsPage() {
           Paste a Personal Access Token to test it against Planning Center and save it. The secret is written to the local{' '}
           <span className="mono">.env</span> file with owner-only permissions — never to SQLite, the browser bundle or the
           logs. Current source: <strong>{secretSource}</strong>.
+        </p>
+        <p className="muted" style={{ margin: '0 0 12px', fontSize: 12 }}>
+          Create one at{' '}
+          <ExternalLink href="https://api.planningcenteronline.com/oauth/applications">
+            api.planningcenteronline.com/oauth/applications
+          </ExternalLink>
+          .
         </p>
         <div className="grid grid-2">
           <Field label="Application ID" hint="From api.planningcenteronline.com/oauth/applications">

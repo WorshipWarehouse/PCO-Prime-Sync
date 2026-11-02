@@ -185,7 +185,7 @@ export const api = {
   primeStatus: () => request<PrimeSessionStatus>('/api/prime/status'),
   capabilities: () =>
     request<{ capabilities: PrimeCapabilityReport[]; automation: string; ready: boolean }>('/api/prime/capabilities'),
-  openLogin: () => request<{ ok: boolean; message: string }>('/api/prime/open-login', { method: 'POST' }),
+  openLogin: () => request<{ ok: boolean; message: string; loginUrl?: string }>('/api/prime/open-login', { method: 'POST' }),
   setlistRecord: (pcoPlanId: string) =>
     request<{ setlist: PrimeSetlistRecord | null }>(`/api/plans/${encodeURIComponent(pcoPlanId)}`),
 };

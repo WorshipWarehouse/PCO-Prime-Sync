@@ -1,24 +1,20 @@
 import { useState } from 'react';
 import { OverviewPage } from './pages/Overview';
-import { PlansPage } from './pages/Plans';
-import { SongMatchingPage } from './pages/SongMatching';
-import { TeamMatchingPage } from './pages/TeamMatching';
+import { ReviewPage } from './pages/ReviewPage';
 import { SyncPage } from './pages/SyncPage';
 import { SettingsPage } from './pages/SettingsPage';
 
-type Tab = 'overview' | 'plans' | 'songs' | 'team' | 'sync' | 'settings';
+type Tab = 'home' | 'review' | 'sync' | 'settings';
 
 const TABS: Array<{ id: Tab; label: string }> = [
-  { id: 'overview', label: 'Overview' },
-  { id: 'plans', label: 'Service plans' },
-  { id: 'songs', label: 'Song matching' },
-  { id: 'team', label: 'Team matching' },
-  { id: 'sync', label: 'Synchronization' },
+  { id: 'home', label: 'Home' },
+  { id: 'review', label: 'Review' },
+  { id: 'sync', label: 'Sync' },
   { id: 'settings', label: 'Settings' },
 ];
 
 export function App() {
-  const [tab, setTab] = useState<Tab>('overview');
+  const [tab, setTab] = useState<Tab>('home');
 
   return (
     <div className="app">
@@ -42,14 +38,12 @@ export function App() {
           ))}
         </nav>
         <footer className="sidebar-footer">
-          <p>Local-only app. Loop changes run through the visible website.</p>
+          <p>Runs on this machine. Loop is only changed through its visible website.</p>
         </footer>
       </aside>
       <main className="content">
-        {tab === 'overview' && <OverviewPage onNavigate={setTab} />}
-        {tab === 'plans' && <PlansPage />}
-        {tab === 'songs' && <SongMatchingPage />}
-        {tab === 'team' && <TeamMatchingPage />}
+        {tab === 'home' && <OverviewPage onNavigate={setTab} />}
+        {tab === 'review' && <ReviewPage />}
         {tab === 'sync' && <SyncPage />}
         {tab === 'settings' && <SettingsPage />}
       </main>
