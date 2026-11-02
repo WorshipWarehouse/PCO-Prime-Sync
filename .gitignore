@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Local data (SQLite database, WAL files, backups)
+data/
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+
+# Loop Community browser profile + session data (NEVER commit)
+profiles/
+.loop-profile/
+prime-profile/
+playwright/.auth/
+user-data-dir/
+artifacts/
+discovery/
+
+# Local selector overrides (may contain account-specific text)
+config/prime-selectors.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# macOS
+.DS_Store
+LaunchAgents/
+
+# Editors
+.idea/
+.vscode/

@@ -1,0 +1,59 @@
+{
+  "$comment": "Copy this file to config/prime-selectors.json (git-ignored) and fill in the values after inspecting the real Loop Community Prime site with `npm run prime:explore`. PCO Prime Sync refuses to click anything while selectors are missing.",
+  "version": 1,
+  "verified": false,
+  "notes": "Selectors are Playwright selector strings (CSS, text=, role=...). They must be derived from a real logged-in session; nothing here is guessed by the application.",
+  "urls": {
+    "setlists": "",
+    "trackSearch": "",
+    "teamMembers": ""
+  },
+  "selectors": {
+    "loggedInIndicator": "",
+    "loggedOutIndicator": "",
+    "setlistList": "",
+    "setlistListItem": "",
+    "setlistListItemName": "",
+    "setlistListItemLink": "",
+    "createSetlistButton": "",
+    "setlistNameInput": "",
+    "createSetlistSubmitButton": "",
+    "setlistTitle": "",
+    "setlistTrackList": "",
+    "setlistTrackItem": "",
+    "setlistTrackTitle": "",
+    "setlistTrackKey": "",
+    "trackSearchOpenButton": "",
+    "trackSearchInput": "",
+    "trackSearchResult": "",
+    "trackSearchResultTitle": "",
+    "trackSearchAddButton": "",
+    "trackRemoveButton": "",
+    "trackConfirmButton": "",
+    "trackMoveUpButton": "",
+    "trackMoveDownButton": "",
+    "trackKeyButton": "",
+    "trackKeyOption": "",
+    "trackKeySaveButton": "",
+    "shareOpenButton": "",
+    "shareSearchInput": "",
+    "shareMemberOption": "",
+    "shareConfirmButton": "",
+    "shareList": "",
+    "shareMemberItem": "",
+    "shareRemoveButton": "",
+    "teamMemberList": "",
+    "teamMemberItem": "",
+    "teamMemberName": "",
+    "teamMemberEmail": ""
+  },
+  "attributes": {
+    "setlistId": "",
+    "trackId": "",
+    "setlistTrackId": "",
+    "memberId": ""
+  },
+  "capabilityNotes": {
+    "change_key": "Set to a note describing exactly how the visible Loop interface changes a setlist track key, once that has been verified."
+  }
+}

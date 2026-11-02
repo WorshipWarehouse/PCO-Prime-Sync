@@ -1,0 +1,49 @@
+{
+  "name": "pco-prime-sync",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Local Planning Center Services to Loop Community Prime setlist sync for churches",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "src/server/index.ts",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:server": "tsx watch src/server/index.ts",
+    "dev:client": "vite",
+    "build": "npm run typecheck && vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "start": "node --import tsx src/server/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "sync": "node --import tsx src/cli/sync.ts",
+    "prime:login": "node --import tsx src/cli/prime-login.ts",
+    "prime:explore": "node --import tsx src/cli/prime-explore.ts",
+    "schedule:install": "node scripts/install-launchd.mjs install",
+    "schedule:uninstall": "node scripts/install-launchd.mjs uninstall",
+    "db:reset": "node --import tsx src/cli/db-reset.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.2.0",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "playwright": "^1.56.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^4.17.23",
+    "@types/node": "^24.9.2",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12",
+    "vitest": "^3.2.4"
+  }
+}
