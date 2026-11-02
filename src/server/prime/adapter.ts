@@ -83,7 +83,13 @@ export interface PrimeAdapter {
   capabilities(): PrimeCapabilityReport[];
   sessionStatus(): Promise<PrimeSessionStatus>;
 
-  /** Open a visible browser window so the administrator can log in manually. */
+  /**
+   * Launch the visible browser and open the login page, returning once it has
+   * loaded. Throws if the window cannot actually be opened.
+   */
+  startManualLogin(): Promise<void>;
+
+  /** Open the login window and keep waiting until the administrator is done. */
   openManualLogin(): Promise<void>;
 
   listTracks(query: string): Promise<PrimeTrack[]>;

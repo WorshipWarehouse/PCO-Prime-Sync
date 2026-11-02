@@ -58,6 +58,10 @@ export class PlaywrightPrimeAdapter implements PrimeAdapter {
     return this.session.status();
   }
 
+  async startManualLogin(): Promise<void> {
+    await this.session.startManualLogin();
+  }
+
   async openManualLogin(): Promise<void> {
     await this.session.openManualLogin();
   }

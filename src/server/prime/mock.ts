@@ -88,6 +88,10 @@ export class MockPrimeAdapter implements PrimeAdapter {
     };
   }
 
+  async startManualLogin(): Promise<void> {
+    // No browser exists in mock mode; nothing to wait for.
+  }
+
   async openManualLogin(): Promise<void> {
     this.authenticated = true;
   }

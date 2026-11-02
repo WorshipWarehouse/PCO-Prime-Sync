@@ -664,13 +664,24 @@ export function createApp(services: Services): express.Express {
         res.json({ ok: true, message: 'Mock adapter: session marked authenticated' });
         return;
       }
-      void services.primeAdapter.openManualLogin().catch((error: unknown) => {
-        console.error('[prime] manual login window closed:', error instanceof Error ? error.message : error);
-      });
-      res.status(202).json({
+      // Wait for the launch to actually happen: reporting success before this
+      // point told people a window was opening when it never appeared.
+      try {
+        await services.primeAdapter.startManualLogin();
+      } catch (error) {
+        const reason = (error instanceof Error ? error.message : String(error)).split('\n')[0];
+        console.error('[prime] could not open the login window:', reason);
+        res.status(502).json({
+          error: 'login_window_failed',
+          loginUrl: LOOP_LOGIN_URL,
+          message: `Could not open the login window on this computer: ${reason}. Chromium could not start — run \`npx playwright install chromium\`, and on Linux it may also need system libraries. The window opens on the machine running PCO Prime Sync, so a remote or headless server cannot show it: run the app on your own Mac (npm run dev) to log in.`,
+        });
+        return;
+      }
+      res.json({
         ok: true,
         loginUrl: LOOP_LOGIN_URL,
-        message: `A Chromium window is opening at ${LOOP_LOGIN_URL}. Sign in there with your own Loop Community credentials — the session is saved in the persistent profile. Close the window when you are done; login state can only be verified after the selector contract is configured.`,
+        message: `A Chromium window opened at ${LOOP_LOGIN_URL} on this computer. Sign in there with your own Loop Community credentials, then close the window. Login state can only be verified once the selector contract is configured.`,
       });
     }),
   );

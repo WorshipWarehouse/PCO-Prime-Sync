@@ -141,17 +141,31 @@ export class PrimeBrowserSession {
    * Open the visible browser and wait until the administrator has logged in.
    * The browser must not be headless for this to be usable.
    */
-  async openManualLogin(): Promise<void> {
+  /**
+   * Launch the visible browser and open the login page, then return while the
+   * window stays open. Throws when the browser cannot actually be launched, so
+   * callers report the real reason instead of claiming a window opened.
+   */
+  async startManualLogin(): Promise<void> {
     if (this.headless) {
       throw new PrimeSessionExpiredError(
-        'Manual Loop login requires a visible browser. Set PRIME_HEADLESS=false and retry.',
+        'Manual Loop login needs a visible browser, but PRIME_HEADLESS is enabled. Set PRIME_HEADLESS=false and restart the app.',
       );
     }
-    const context = await this.ensureContext();
+    await this.ensureContext();
     const page = await this.page();
     // Go straight to the WorshipTools auth page: that is where Loop Community
     // actually signs people in, and it sets the cookies the Prime site reads.
-    await page.goto(this.loginUrl, { waitUntil: 'domcontentloaded' });
+    await page.goto(this.loginUrl, { waitUntil: 'domcontentloaded', timeout: this.actionTimeoutMs });
+  }
+
+  /**
+   * Open the login window and wait for the administrator to finish there.
+   * The browser must not be headless for this to be usable.
+   */
+  async openManualLogin(): Promise<void> {
+    await this.startManualLogin();
+    const context = await this.ensureContext();
     const deadline = Date.now() + this.loginTimeoutMs;
     const configured = Boolean(this.config.selectors.loggedInIndicator || this.config.selectors.loggedOutIndicator);
     if (!configured) {

@@ -36,6 +36,9 @@ The PCO client throttles to ~1 request per 650 ms and retries 429/5xx with backo
 **`Loop Community Prime session is not authenticated` / `needs_login`**
 Click **Overview → Log in to Loop**, log in in the window (including 2FA), then sync again. The session is stored in the persistent profile; it survives restarts but not a manual sign-out or a Loop-side expiry.
 
+**`Log in to Loop` reports it cannot open a window**
+The browser opens on the machine that runs the server, so a remote or headless host cannot show it — this is common when the app runs in a container or on another box. The message now includes the real reason. Run `npm run dev` on your own Mac to log in; the session is stored in `profiles/prime` on that machine. A missing Chromium also produces this error: run `npx playwright install chromium`.
+
 **`Login state cannot be detected yet`**
 No `loggedInIndicator`/`loggedOutIndicator` selector is configured. Run `npm run prime:explore` and fill `config/prime-selectors.json`. The login window still saves the Loop session cookies into the profile — closing it after signing in is enough for the next stage; only the *reported* state waits for selectors.
 
