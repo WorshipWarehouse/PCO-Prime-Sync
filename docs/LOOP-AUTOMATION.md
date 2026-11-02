@@ -33,7 +33,7 @@ There is no public Loop Community API. PCO Prime Sync drives the **visible websi
 
 Loop Community is part of WorshipTools, and Prime signs in through its shared identity service. That is why the login window opens a Loop page instead of an auth URL: the sign-in form only appears when an app requests it with parameters it generates.
 
-`https://auth.worshiptools.com/login` on its own answers `302 → https://www.worshiptools.com`, WorshipTools' corporate home, which contains no form — measured in a clean Chromium profile: zero password fields, zero email fields, with and without the common `redirect`/`returnTo`/`app`/`client_id` parameters. `https://loopcommunity.com/prime-multitrack-app` answers `200` and does present an email field, so the window starts there and lets the site perform its own redirect into the shared sign-in.
+`https://auth.worshiptools.com/login` on its own answers `302 → https://www.worshiptools.com`, WorshipTools' corporate home, which contains no form — measured in a clean Chromium profile: zero password fields, zero email fields, with and without the common `redirect`/`returnTo`/`app`/`client_id` parameters. The login window opens the shared sign-in URL itself, and the response reports where the site lands it — `https://loopcommunity.com/prime-multitrack-app` answers `200` and presents an email field for comparison.
 
 `PRIME_LOGIN_URL` overrides the window's start page, which is what the administrator asked for, so the window is never moved anywhere else. If the configured page lands on the WorshipTools home page, the response says so and reports how many email and password fields that page actually had, rather than silently relocating or claiming a working sign-in page.
 

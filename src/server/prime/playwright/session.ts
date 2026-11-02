@@ -13,6 +13,9 @@ import { loadSelectorConfig, type PrimeSelectorConfig } from './selectors';
  */
 export const LOOP_PRIME_ENTRY_PATH = '/prime-multitrack-app';
 
+/** Loop Community's sign-in, served by WorshipTools' shared identity service. */
+export const WORSHIPTOOLS_LOGIN_URL = 'https://auth.worshiptools.com/login';
+
 /** Where the Prime app actually lives when nothing is configured. */
 export const DEFAULT_PRIME_BASE_URL = 'https://loopcommunity.com';
 
@@ -148,9 +151,9 @@ export class PrimeBrowserSession {
     this.profileDir = options.profileDir;
     this.headless = options.headless;
     this.baseUrl = options.baseUrl.replace(/\/+$/, '');
-    // Default to the Prime app so its own sign-in redirect runs; the marketing
-    // site (what auth.worshiptools.com/login falls back to) would just sit blank.
-    this.loginUrl = options.loginUrl ?? `${this.baseUrl}${LOOP_PRIME_ENTRY_PATH}`;
+    // Loop Community signs in through WorshipTools' shared identity service, so
+    // the window opens that sign-in page. PRIME_LOGIN_URL can override it.
+    this.loginUrl = options.loginUrl ?? WORSHIPTOOLS_LOGIN_URL;
     this.loginTimeoutMs = options.loginTimeoutMs;
     this.actionTimeoutMs = options.actionTimeoutMs;
     this.config = options.selectorConfig ?? loadSelectorConfig();

@@ -13,8 +13,9 @@ import {
   formatDateTime,
 } from '../components';
 
-// The Prime app itself starts the sign-in redirect; the auth host alone does not.
-const DEFAULT_PRIME_ENTRY = 'https://loopcommunity.com/prime-multitrack-app';
+// Loop Community signs in through WorshipTools' shared identity service, so that
+// is where the login window opens. The server's configured value wins on load.
+const DEFAULT_PRIME_ENTRY = 'https://auth.worshiptools.com/login';
 
 type Tab = 'home' | 'review' | 'sync' | 'settings';
 

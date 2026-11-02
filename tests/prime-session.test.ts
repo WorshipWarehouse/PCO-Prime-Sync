@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { PrimeSelectorConfig } from '../src/server/prime/playwright/selectors';
-import { LOOP_PRIME_ENTRY_PATH, PrimeBrowserSession } from '../src/server/prime/playwright/session';
+import {
+  LOOP_PRIME_ENTRY_PATH,
+  PrimeBrowserSession,
+  WORSHIPTOOLS_LOGIN_URL,
+} from '../src/server/prime/playwright/session';
 
 const emptyConfig: PrimeSelectorConfig = { version: 1, verified: false, urls: { setlists: '' }, selectors: {} };
 
@@ -17,20 +21,17 @@ function session(overrides: { baseUrl?: string; loginUrl?: string } = {}): Prime
 }
 
 describe('Prime login window URL', () => {
-  it('opens the Prime app so the site performs its own sign-in redirect', () => {
-    expect(LOOP_PRIME_ENTRY_PATH).toBe('/prime-multitrack-app');
-    expect(session().loginUrl).toBe('https://loopcommunity.com/prime-multitrack-app');
+  it('opens Loop Community sign-in through WorshipTools', () => {
+    expect(WORSHIPTOOLS_LOGIN_URL).toBe('https://auth.worshiptools.com/login');
+    expect(session().loginUrl).toBe('https://auth.worshiptools.com/login');
   });
 
-  it('ignores a trailing slash on the configured base URL', () => {
+  it('keeps the sign-in URL independent of the configured base URL', () => {
     expect(session({ baseUrl: 'https://loopcommunity.com/' }).loginUrl).toBe(
-      'https://loopcommunity.com/prime-multitrack-app',
+      'https://auth.worshiptools.com/login',
     );
-  });
-
-  it('follows a custom base URL', () => {
     expect(session({ baseUrl: 'https://prime.example.test' }).loginUrl).toBe(
-      'https://prime.example.test/prime-multitrack-app',
+      'https://auth.worshiptools.com/login',
     );
   });
 
@@ -38,5 +39,9 @@ describe('Prime login window URL', () => {
     expect(session({ loginUrl: 'https://apps.example.test/sign-in' }).loginUrl).toBe(
       'https://apps.example.test/sign-in',
     );
+  });
+
+  it('still knows the Prime app entry path used by automation', () => {
+    expect(LOOP_PRIME_ENTRY_PATH).toBe('/prime-multitrack-app');
   });
 });
