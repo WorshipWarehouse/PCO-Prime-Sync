@@ -10,7 +10,7 @@ import path from 'node:path';
 import { loadEnv } from '../server/env';
 import { openDatabase } from '../server/db';
 import { Repository } from '../server/db/repo';
-import { PrimeBrowserSession } from '../server/prime/playwright/session';
+import { LOOP_LOGIN_URL, PrimeBrowserSession } from '../server/prime/playwright/session';
 import { loadSelectorConfig } from '../server/prime/playwright/selectors';
 
 async function main(): Promise<void> {
@@ -30,12 +30,13 @@ async function main(): Promise<void> {
     selectorConfig: loadSelectorConfig(),
   });
 
-  console.log('Opening Loop Community Prime in a visible Chromium window…');
-  console.log(`Base URL: ${settings.primeBaseUrl}`);
+  console.log('Opening the Loop Community login page in a visible Chromium window…');
+  console.log(`Login:    ${LOOP_LOGIN_URL}`);
+  console.log(`Prime:    ${settings.primeBaseUrl}`);
   console.log(`Profile:  ${session.profileDir} (session cookies are stored here — never commit it)`);
 
   const page = await session.page();
-  await page.goto(settings.primeBaseUrl, { waitUntil: 'domcontentloaded' }).catch(() => undefined);
+  await page.goto(LOOP_LOGIN_URL, { waitUntil: 'domcontentloaded' }).catch(() => undefined);
 
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   console.log('\nLog in through the browser window. The app never asks for your password and never bypasses 2FA.');

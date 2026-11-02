@@ -116,16 +116,18 @@ function parseConfig(raw: unknown, source: string): PrimeSelectorConfig {
     const value = selectors[key];
     if (typeof value === 'string' && value.trim() !== '') cleanSelectors[key] = value;
   }
+  // URLs may stay blank in the committed template: logging in only needs the
+  // browser profile and the auth URL, so a fresh install must still start. Every
+  // operation that actually needs a page goes through urlFor(), which fails
+  // loudly with the exact missing key.
   const urls = (record.urls ?? {}) as Record<string, unknown>;
-  if (typeof urls.setlists !== 'string' || urls.setlists.trim() === '') {
-    throw new Error(`Prime selector config ${source} is missing urls.setlists`);
-  }
+  const setlistsUrl = typeof urls.setlists === 'string' ? urls.setlists.trim() : '';
   return {
     version: Number(record.version ?? 1),
     verified: record.verified === true,
     notes: typeof record.notes === 'string' ? record.notes : undefined,
     urls: {
-      setlists: urls.setlists,
+      setlists: setlistsUrl,
       trackSearch: typeof urls.trackSearch === 'string' ? urls.trackSearch : undefined,
       teamMembers: typeof urls.teamMembers === 'string' ? urls.teamMembers : undefined,
     },

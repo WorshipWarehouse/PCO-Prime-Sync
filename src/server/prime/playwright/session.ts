@@ -5,10 +5,19 @@ import type { PrimeSessionStatus } from '../../../shared/types';
 import { PrimeSessionExpiredError } from '../adapter';
 import { loadSelectorConfig, type PrimeSelectorConfig } from './selectors';
 
+/**
+ * Loop Community signs users in through WorshipTools' shared auth host, not
+ * through the Prime site itself. Opening this page is the only login step the
+ * app performs: the administrator types their own credentials there.
+ */
+export const LOOP_LOGIN_URL = 'https://auth.worshiptools.com/login';
+
 export interface PrimeSessionOptions {
   profileDir: string;
   headless: boolean;
   baseUrl: string;
+  /** Where the manual login window opens. Defaults to {@link LOOP_LOGIN_URL}. */
+  loginUrl?: string;
   loginTimeoutMs: number;
   actionTimeoutMs: number;
   selectorConfig?: PrimeSelectorConfig;
@@ -28,6 +37,7 @@ export class PrimeBrowserSession {
   readonly profileDir: string;
   readonly headless: boolean;
   readonly baseUrl: string;
+  readonly loginUrl: string;
   readonly loginTimeoutMs: number;
   readonly actionTimeoutMs: number;
 
@@ -35,6 +45,7 @@ export class PrimeBrowserSession {
     this.profileDir = options.profileDir;
     this.headless = options.headless;
     this.baseUrl = options.baseUrl.replace(/\/+$/, '');
+    this.loginUrl = options.loginUrl ?? LOOP_LOGIN_URL;
     this.loginTimeoutMs = options.loginTimeoutMs;
     this.actionTimeoutMs = options.actionTimeoutMs;
     this.config = options.selectorConfig ?? loadSelectorConfig();
@@ -108,7 +119,7 @@ export class PrimeBrowserSession {
         state: configured ? 'needs_login' : 'unknown',
         checkedAt,
         message: configured
-          ? 'Loop Community Prime needs a manual login (run `npm run prime:login`).'
+          ? `Loop Community needs a manual login at ${this.loginUrl} (Overview → Log in to Loop, or \`npm run prime:login\`).`
           : 'Login state cannot be detected yet: no login indicator selector is configured. Run `npm run prime:explore`.',
         currentUrl,
         profileDir: this.profileDir,
@@ -131,14 +142,16 @@ export class PrimeBrowserSession {
    * The browser must not be headless for this to be usable.
    */
   async openManualLogin(): Promise<void> {
-    const context = await this.ensureContext();
-    const page = await context.newPage();
-    await page.goto(this.baseUrl, { waitUntil: 'domcontentloaded' });
     if (this.headless) {
       throw new PrimeSessionExpiredError(
         'Manual Loop login requires a visible browser. Set PRIME_HEADLESS=false and retry.',
       );
     }
+    const context = await this.ensureContext();
+    const page = await this.page();
+    // Go straight to the WorshipTools auth page: that is where Loop Community
+    // actually signs people in, and it sets the cookies the Prime site reads.
+    await page.goto(this.loginUrl, { waitUntil: 'domcontentloaded' });
     const deadline = Date.now() + this.loginTimeoutMs;
     const configured = Boolean(this.config.selectors.loggedInIndicator || this.config.selectors.loggedOutIndicator);
     if (!configured) {

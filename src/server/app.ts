@@ -17,6 +17,7 @@ import {
   validatePcoCredentials,
   writePcoCredentialsToEnv,
 } from './pco/credentials';
+import { LOOP_LOGIN_URL } from './prime/playwright/session';
 import { scheduleInfo } from './sync/scheduler';
 import { countOperations } from './sync/engine';
 
@@ -668,8 +669,8 @@ export function createApp(services: Services): express.Express {
       });
       res.status(202).json({
         ok: true,
-        message:
-          'A Chromium window is opening. Log in to Loop Community there — the session is saved in the persistent profile. Close the window when you are signed in; login state can only be verified after the selector contract is configured.',
+        loginUrl: LOOP_LOGIN_URL,
+        message: `A Chromium window is opening at ${LOOP_LOGIN_URL}. Sign in there with your own Loop Community credentials — the session is saved in the persistent profile. Close the window when you are done; login state can only be verified after the selector contract is configured.`,
       });
     }),
   );

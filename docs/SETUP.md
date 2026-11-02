@@ -92,7 +92,7 @@ Songs are matched to multitracks the moment plan data is imported. Unique matche
 
 ## 5. Connect Loop Community Prime
 
-1. **Overview → Log in to Loop**. A visible Chromium window opens with the persistent profile in `profiles/prime` (git-ignored, owner-only permissions).
+1. **Overview → Log in to Loop**. A visible Chromium window opens at <https://auth.worshiptools.com/login> — Loop Community signs people in through WorshipTools' shared auth host, so that is the page the app opens — using the persistent profile in `profiles/prime` (git-ignored, owner-only permissions).
 2. Log in yourself, including any 2FA. The app never asks for your password and never bypasses security controls.
 3. Close the window or press Enter in `npm run prime:login` if you used the CLI.
 4. **Overview** should now show the Loop session as authenticated when login indicators are configured (see next step).
