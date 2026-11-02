@@ -1,3 +1,4 @@
+import type { LoginWindowInfo } from '../adapter';
 import type { Page } from 'playwright';
 import type {
   PrimeCapability,
@@ -62,8 +63,8 @@ export class PlaywrightPrimeAdapter implements PrimeAdapter {
     return this.session.status();
   }
 
-  async startManualLogin(): Promise<void> {
-    await this.session.startManualLogin();
+  async startManualLogin(): Promise<LoginWindowInfo> {
+    return this.session.startManualLogin();
   }
 
   async openManualLogin(): Promise<void> {

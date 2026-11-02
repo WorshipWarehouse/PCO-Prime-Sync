@@ -1,3 +1,4 @@
+import type { LoginWindowInfo } from './adapter';
 import type {
   PrimeCapability,
   PrimeCapabilityReport,
@@ -90,8 +91,9 @@ export class MockPrimeAdapter implements PrimeAdapter {
 
   readonly loginUrl = 'mock://prime/login';
 
-  async startManualLogin(): Promise<void> {
-    // No browser exists in mock mode; nothing to wait for.
+  async startManualLogin(): Promise<LoginWindowInfo> {
+    // No browser exists in mock mode; report the placeholder window.
+    return { url: this.loginUrl, title: 'Mock Prime' };
   }
 
   async openManualLogin(): Promise<void> {

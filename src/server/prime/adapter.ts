@@ -77,6 +77,12 @@ export interface CreateSetlistInput {
  * Both the Playwright adapter and the test mock implement this interface, so the
  * engine has no knowledge of browsers, selectors or HTML.
  */
+/** What the login window actually loaded, so failures are diagnosable. */
+export interface LoginWindowInfo {
+  url: string;
+  title: string;
+}
+
 export interface PrimeAdapter {
   readonly kind: 'playwright' | 'mock';
   /** Page the login window opens; Loop redirects from here to its auth host. */
@@ -89,7 +95,7 @@ export interface PrimeAdapter {
    * Launch the visible browser and open the login page, returning once it has
    * loaded. Throws if the window cannot actually be opened.
    */
-  startManualLogin(): Promise<void>;
+  startManualLogin(): Promise<LoginWindowInfo>;
 
   /** Open the login window and keep waiting until the administrator is done. */
   openManualLogin(): Promise<void>;

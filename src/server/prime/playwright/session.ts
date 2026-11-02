@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { BrowserContext, Page } from 'playwright';
 import type { PrimeSessionStatus } from '../../../shared/types';
-import { PrimeSessionExpiredError } from '../adapter';
+import { PrimeSessionExpiredError, type LoginWindowInfo } from '../adapter';
 import { loadSelectorConfig, type PrimeSelectorConfig } from './selectors';
 
 /**
@@ -141,15 +141,11 @@ export class PrimeBrowserSession {
   }
 
   /**
-   * Open the visible browser and wait until the administrator has logged in.
-   * The browser must not be headless for this to be usable.
-   */
-  /**
    * Launch the visible browser and open the login page, then return while the
    * window stays open. Throws when the browser cannot actually be launched, so
    * callers report the real reason instead of claiming a window opened.
    */
-  async startManualLogin(): Promise<void> {
+  async startManualLogin(): Promise<LoginWindowInfo> {
     if (this.headless) {
       throw new PrimeSessionExpiredError(
         'Manual Loop login needs a visible browser, but PRIME_HEADLESS is enabled. Set PRIME_HEADLESS=false and restart the app.',
@@ -165,6 +161,9 @@ export class PrimeBrowserSession {
     await page
       .waitForLoadState('load', { timeout: Math.min(this.actionTimeoutMs, 20_000) })
       .catch(() => undefined);
+    // Report what the window is showing: an empty title means it painted
+    // nothing, which is otherwise indistinguishable from a healthy window.
+    return { url: page.url(), title: await page.title().catch(() => '') };
   }
 
   /**

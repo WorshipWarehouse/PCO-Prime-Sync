@@ -1,3 +1,4 @@
+import type { LoginWindowInfo } from './prime/adapter';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -666,8 +667,9 @@ export function createApp(services: Services): express.Express {
       const loginUrl = services.primeAdapter.loginUrl;
       // Wait for the launch to actually happen: reporting success before this
       // point told people a window was opening when it never appeared.
+      let opened: LoginWindowInfo;
       try {
-        await services.primeAdapter.startManualLogin();
+        opened = await services.primeAdapter.startManualLogin();
       } catch (error) {
         const reason = (error instanceof Error ? error.message : String(error)).split('\n')[0];
         console.error('[prime] could not open the login window:', reason);
@@ -678,10 +680,15 @@ export function createApp(services: Services): express.Express {
         });
         return;
       }
+      const shown = opened.title ? `"${opened.title}"` : '(a page with no title)';
+      const blankWarning = opened.title
+        ? ''
+        : ' The page has no title, which usually means it rendered nothing — compare the URL above with what you expect and try again.';
       res.json({
         ok: true,
         loginUrl,
-        message: `A Chromium window opened at ${loginUrl} on this computer. Loop redirects it to the WorshipTools sign-in — enter your own credentials there, then close the window. Login state can only be verified once the selector contract is configured.`,
+        window: opened,
+        message: `Login window now shows ${shown} at ${opened.url}. Sign in there with your own Loop Community credentials, then close the window.${blankWarning}`,
       });
     }),
   );
@@ -689,8 +696,18 @@ export function createApp(services: Services): express.Express {
   // ---- static dashboard -------------------------------------------------
   const clientDir = path.resolve(process.cwd(), 'dist/client');
   if (fs.existsSync(clientDir)) {
-    app.use(express.static(clientDir, { index: false }));
+    app.use(
+      express.static(clientDir, {
+        index: false,
+        setHeaders: (res, filePath) => {
+          // A cached index.html can outlive the hashed bundle it references, and
+          // the result is a blank page with a correct title and no error.
+          if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-store');
+        },
+      }),
+    );
     app.get(/^\/(?!api\/).*/, (_req, res) => {
+      res.setHeader('Cache-Control', 'no-store');
       res.sendFile(path.join(clientDir, 'index.html'));
     });
   } else {
