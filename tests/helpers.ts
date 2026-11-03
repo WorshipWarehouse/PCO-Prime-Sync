@@ -16,6 +16,7 @@ export const ALL_CAPABILITIES: PrimeCapability[] = [
   'search_tracks',
   'list_team_members',
   'create_setlist',
+  'rename_setlist',
   'add_track',
   'remove_track',
   'reorder_tracks',

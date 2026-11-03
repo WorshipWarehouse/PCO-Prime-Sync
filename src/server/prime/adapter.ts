@@ -108,6 +108,8 @@ export interface PrimeAdapter {
   getSetlist(setlistId: string): Promise<PrimeSetlist>;
 
   createSetlist(input: CreateSetlistInput): Promise<PrimeSetlist>;
+  /** Rename an existing setlist. Only the name is ever changed. */
+  renameSetlist(setlistId: string, name: string): Promise<void>;
 
   addTrack(setlistId: string, input: { trackId: string; position: number; key: string | null }): Promise<void>;
   removeTrack(setlistId: string, setlistTrackId: string): Promise<void>;

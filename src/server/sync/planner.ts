@@ -171,9 +171,22 @@ export function planPlanChanges(input: PlannerInput): PlanSyncPreview {
   }
 
   if (normalizeSongName(liveSetlist.name) !== normalizeSongName(desired.setlistName)) {
-    flags.push(
-      `Setlist name in Prime is "${liveSetlist.name}" but the convention expects "${desired.setlistName}". Renaming through the website is not implemented, so it was left unchanged.`,
-    );
+    if (capabilitySupported(capabilities, 'rename_setlist')) {
+      operations.push({
+        pcoPlanId: planId,
+        changeType: 'rename_setlist',
+        description: `Rename the Prime setlist from "${liveSetlist.name}" to "${desired.setlistName}"`,
+        nameOnPrime: liveSetlist.name,
+        nameDesired: desired.setlistName,
+      });
+    } else {
+      flags.push(
+        `Setlist name in Prime is "${liveSetlist.name}" but the convention expects "${desired.setlistName}". Renaming is not available through the automation: ${capabilityNote(
+          capabilities,
+          'rename_setlist',
+        )}`,
+      );
+    }
   }
 
   if (songsBlocked) {

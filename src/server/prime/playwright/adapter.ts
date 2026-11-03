@@ -344,6 +344,29 @@ export class PlaywrightPrimeAdapter implements PrimeAdapter {
     return created;
   }
 
+  async renameSetlist(setlistId: string, name: string): Promise<void> {
+    const page = await this.assertAuthenticated();
+    await this.openSetlist(page, setlistId);
+    const selectors = requireSelectors(
+      this.config,
+      ['setlistRenameButton', 'setlistRenameInput', 'setlistRenameSaveButton'],
+      'rename_setlist',
+    );
+    await page.locator(selectors.setlistRenameButton).first().click();
+    const input = page.locator(selectors.setlistRenameInput).first();
+    await input.waitFor({ state: 'visible' });
+    await input.fill(name);
+    await page.locator(selectors.setlistRenameSaveButton).first().click();
+    await page.waitForLoadState('domcontentloaded');
+
+    const after = await this.getSetlist(setlistId);
+    if (normalizeSongName(after.name) !== normalizeSongName(name)) {
+      throw new PrimeVerificationError(
+        `Setlist ${setlistId} still reads "${after.name}" after renaming it to "${name}".`,
+      );
+    }
+  }
+
   async addTrack(setlistId: string, input: { trackId: string; position: number; key: string | null }): Promise<void> {
     const page = await this.assertAuthenticated();
     await this.openSetlist(page, setlistId);

@@ -16,10 +16,11 @@ This repository is a working application with honest boundaries. What that means
 
 | Area | State |
 | --- | --- |
-| Local dashboard, SQLite schema, mappings, change detection, idempotency, scheduler, tests | **Implemented and tested** (75 Vitest tests, mocked adapters) |
+| Local dashboard, SQLite schema, mappings, change detection, idempotency, scheduler, tests | **Implemented and tested** (100 Vitest tests, mocked adapters) |
 | Planning Center reads (plans, items, arrangements, keys, team members, emails) | **Implemented against the official Services API v2 documentation**, not yet exercised against a live account from this workspace |
 | Planning Center credentials | Required to fetch real data — see [docs/SETUP.md](docs/SETUP.md) |
 | Loop Prime setlist creation, adding tracks, reordering, sharing | **Structured but unverified**: driven by a selector contract that must be filled from a real, logged-in Loop session (`npm run prime:explore`) |
+| Renaming a Prime setlist when the plan title changes | **Implemented** through the same selector contract (`rename_setlist`), verified by re-reading the displayed name; needs those selectors before it runs against real Loop |
 | Loop key editing | **Unknown until inspected.** If the visible Loop interface cannot change a setlist track key, the app records the limitation and leaves the rest working (see [docs/LOOP-AUTOMATION.md](docs/LOOP-AUTOMATION.md)) |
 | Removing an individual member from a Prime setlist | **Unknown until inspected** — reported as a limitation rather than faked |
 | Deleting Prime setlists | **Never done automatically** by design |
@@ -88,6 +89,7 @@ Full instructions: [docs/SETUP.md](docs/SETUP.md).
 | Planning Center change | Loop Prime action |
 | --- | --- |
 | New service plan | Create a setlist named `<Plan name> — <Month D, YYYY>` |
+| Plan title changed | Rename the existing setlist in place; it is never recreated |
 | New song | Add the matched multitrack |
 | Song removed | Remove the corresponding setlist track |
 | Song reordered | Reorder the setlist |

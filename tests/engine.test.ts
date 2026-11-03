@@ -137,6 +137,28 @@ describe('SyncEngine — end to end with mock adapters', () => {
     closeDatabase(ctx.db);
   });
 
+  it('renames the setlist when the Planning Center plan title changes, and stays idempotent', async () => {
+    const ctx = setup();
+    await ctx.makeEngine().run({ mode: 'sync', trigger: 'manual' });
+
+    ctx.fixtures.plans[0]!.plan.title = 'Sunday Night Service';
+    const renamed = buildSetlistName('Sunday Night Service', ctx.fixtures.plans[0]!.plan.planDate);
+
+    const result = await ctx.makeEngine().run({ mode: 'sync', trigger: 'manual' });
+    expect(result.status).toBe('success');
+    const names = ctx.prime.peekAllSetlists().map((setlist) => setlist.name);
+    expect(names).toContain(renamed);
+    expect(names).not.toContain(setlistName(0));
+    // Renamed in place: the setlist was never recreated.
+    expect(ctx.prime.calls.some((call) => call.startsWith('renameSetlist'))).toBe(true);
+    expect(ctx.prime.peekAllSetlists()).toHaveLength(2);
+
+    const again = await ctx.makeEngine().run({ mode: 'sync', trigger: 'manual' });
+    expect(again.changesApplied).toBe(0);
+
+    closeDatabase(ctx.db);
+  });
+
   it('reorders the Prime setlist when Planning Center order changes', async () => {
     const ctx = setup();
     await ctx.makeEngine().run({ mode: 'sync', trigger: 'manual' });

@@ -42,12 +42,13 @@ interface AnalysisResult {
 
 const OPERATION_ORDER: Record<string, number> = {
   create_setlist: 0,
-  remove_track: 1,
-  add_track: 2,
-  reorder_tracks: 3,
-  key_change: 4,
-  share_member: 5,
-  unshare_member: 6,
+  rename_setlist: 1,
+  remove_track: 2,
+  add_track: 3,
+  reorder_tracks: 4,
+  key_change: 5,
+  share_member: 6,
+  unshare_member: 7,
   flag_review: 9,
   noop: 10,
 };
@@ -545,6 +546,11 @@ export class SyncEngine {
           state: { tracks: created.tracks, shares: created.shares },
         });
         return { setlistId: created.id, detail: `Prime setlist id ${created.id}` };
+      }
+      case 'rename_setlist': {
+        if (!context.setlistId) throw new Error('Cannot rename a setlist that does not exist yet');
+        await prime.renameSetlist(context.setlistId, operation.nameDesired);
+        return { detail: `"${operation.nameOnPrime}" → "${operation.nameDesired}"` };
       }
       case 'add_track': {
         if (!context.setlistId) throw new Error('Cannot add a track before the setlist exists');

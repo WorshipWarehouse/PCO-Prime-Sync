@@ -33,6 +33,7 @@ const ALL_CAPABILITIES: PrimeCapability[] = [
   'search_tracks',
   'list_team_members',
   'create_setlist',
+  'rename_setlist',
   'add_track',
   'remove_track',
   'reorder_tracks',
@@ -179,6 +180,17 @@ export class MockPrimeAdapter implements PrimeAdapter {
     };
     this.setlists.set(id, { ...setlist, createdAt: new Date().toISOString() });
     return structuredClone(setlist);
+  }
+
+  async renameSetlist(setlistId: string, name: string): Promise<void> {
+    this.calls.push(`renameSetlist:${setlistId}:${name}`);
+    this.assertReady('rename_setlist');
+    const setlist = this.setlists.get(setlistId);
+    if (!setlist) throw new PrimeVerificationError(`Setlist ${setlistId} not found`);
+    setlist.name = name;
+    if (this.failVerification) {
+      throw new PrimeVerificationError('Mock verification failure after renaming the setlist');
+    }
   }
 
   async addTrack(

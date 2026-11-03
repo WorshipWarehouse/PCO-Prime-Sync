@@ -39,6 +39,7 @@ export type SyncRunStatus =
 
 export type ChangeType =
   | 'create_setlist'
+  | 'rename_setlist'
   | 'add_track'
   | 'remove_track'
   | 'reorder_tracks'
@@ -192,6 +193,7 @@ export type PrimeCapability =
   | 'search_tracks'
   | 'list_team_members'
   | 'create_setlist'
+  | 'rename_setlist'
   | 'add_track'
   | 'remove_track'
   | 'reorder_tracks'
@@ -404,6 +406,12 @@ export interface CreateSetlistOperation extends SyncOperationBase {
   trackCount: number;
 }
 
+export interface RenameSetlistOperation extends SyncOperationBase {
+  changeType: 'rename_setlist';
+  nameOnPrime: string;
+  nameDesired: string;
+}
+
 export interface AddTrackOperation extends SyncOperationBase {
   changeType: 'add_track';
   track: DesiredTrack;
@@ -450,6 +458,7 @@ export interface FlagReviewOperation extends SyncOperationBase {
 
 export type SyncOperation =
   | CreateSetlistOperation
+  | RenameSetlistOperation
   | AddTrackOperation
   | RemoveTrackOperation
   | ReorderOperation

@@ -109,6 +109,36 @@ describe('planPlanChanges — existing setlist', () => {
     expect(preview.status).toBe('in_sync');
   });
 
+  it('renames the setlist when the plan title no longer matches the Prime name', () => {
+    const preview = planPlanChanges({
+      desired: buildDesiredPlan(),
+      existingRecord: buildRecord({ primeSetlistName: 'Sunday Service (old)' }),
+      liveSetlist: buildSetlist({ name: 'Sunday Service (old)' }),
+      capabilities: capabilities(),
+    });
+    expect(operationTypes(preview)).toEqual(['rename_setlist']);
+    const operation = preview.operations[0];
+    expect(operation?.changeType === 'rename_setlist' && operation.nameDesired).toBe(
+      'Sunday Service — November 8, 2026',
+    );
+  });
+
+  it('flags a rename it cannot perform instead of failing the plan', () => {
+    const preview = planPlanChanges({
+      desired: buildDesiredPlan(),
+      existingRecord: buildRecord(),
+      liveSetlist: buildSetlist({ name: 'Sunday Service (old)' }),
+      capabilities: capabilities({ rename_setlist: 'no' }),
+    });
+    expect(operationTypes(preview)).not.toContain('rename_setlist');
+    expect(
+      preview.operations.some(
+        (operation) =>
+          operation.changeType === 'flag_review' && operation.description.includes('Renaming is not available'),
+      ),
+    ).toBe(true);
+  });
+
   it('changes only the key when the PCO key changes', () => {
     const preview = planPlanChanges({
       desired: buildDesiredPlan({ songs: [buildResolvedSong({ keyName: 'A' })] }),

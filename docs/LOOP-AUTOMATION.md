@@ -20,6 +20,7 @@ There is no public Loop Community API. PCO Prime Sync drives the **visible websi
 | List setlists | `PlaywrightPrimeAdapter.listSetlists` | Requires configured selectors |
 | Search owned multitracks | `listTracks` | Requires configured selectors |
 | Create setlist | `createSetlist` (verifies the new name is visible) | Requires configured selectors |
+| Rename setlist | `renameSetlist` (verifies the displayed name) | Requires configured selectors |
 | Add track (+ key) | `addTrack` (verifies the track appears) | Requires configured selectors and a key control |
 | Remove track | `removeTrack` (verifies it is gone) | Requires configured selectors |
 | Reorder tracks | `reorderTracks` via move up/down controls | Requires configured selectors |

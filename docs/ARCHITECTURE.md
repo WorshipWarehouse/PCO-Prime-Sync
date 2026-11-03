@@ -50,7 +50,7 @@ PCO Prime Sync is a single Node.js process plus a static React dashboard, both l
    - `GET /services/v2/people?where[id]=…&include=emails`
 3. **Resolution** (`resolve.ts`) — for every song item: choose the arrangement (Default → Original → manual review), read the PCO key from the plan item, look up a saved mapping, otherwise search the Prime library and apply exact-name matching; for every scheduled person on a configured worship team: look up a saved email mapping, otherwise read Prime Team members and match by normalized email.
 4. **Planning** (`planner.ts`) — pair desired tracks with the tracks Prime currently shows, then emit only the needed operations: create setlist, add/remove track, reorder, key change, share/unshare, or `flag_review`. Plans with unmatched/ambiguous songs are blocked, never partially written.
-5. **Execution** (`engine.ts`) — ordered per plan: create → removals → additions → reorder → key changes → shares → unshares. Each adapter method verifies its own post-condition in the browser; the engine then re-reads the setlist, persists the verified state and tracks per-song/per-musician identity.
+5. **Execution** (`engine.ts`) — ordered per plan: create → rename → removals → additions → reorder → key changes → shares → unshares. Each adapter method verifies its own post-condition in the browser; the engine then re-reads the setlist, persists the verified state and tracks per-song/per-musician identity.
 6. **History** — `sync_history`, `sync_changes`, `sync_errors` record what was planned, applied, blocked or failed. The verified Loop state in `prime_setlists.state_json` is what makes the next run idempotent.
 
 ## Database schema
